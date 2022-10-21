@@ -4,8 +4,8 @@ module Main where
 
 import Prelude
 import Test.Tasty
-import qualified Test.MintRaffleTest as MintRaffleTest
-import qualified Test.LotteryTest    as LotteryTest
+import qualified Spec.MintRaffleTest as MintRaffleTest
+import qualified Spec.LotteryTest    as LotteryTest
 
 main = defaultMain tests
 

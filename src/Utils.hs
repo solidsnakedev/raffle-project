@@ -46,7 +46,8 @@ writeUnit = do
     putStrLn "unit value saved in -> output/unit.json"
 
 writeValidator :: FilePath -> LedgerScripts.Validator -> IO (Either (FileError ()) ())
-writeValidator file validator = CardanoAPI.writeFileTextEnvelope file Nothing scriptSerialised
+writeValidator file validator = do
+    CardanoAPI.writeFileTextEnvelope file Nothing scriptSerialised
     where
         script :: LedgerScripts.Script
         script = LedgerScripts.unValidatorScript validator

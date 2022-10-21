@@ -1,6 +1,6 @@
 {-# LANGUAGE NumericUnderscores  #-}
 
-module Test.LotteryTest where
+module Spec.LotteryTest where
 
 import Prelude
 import Plutus.V1.Ledger.Contexts (

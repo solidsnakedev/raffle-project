@@ -114,7 +114,11 @@ library
     , MintRaffleEmulator
 
 executable raffle-project
-  import:              common-lang
+  import:
+    common-lang ,
+    plutus-default-dependencies ,
+    non-cardano-dependencies
+
   hs-source-dirs:      app
   main-is:             Main.hs
   build-depends:       base ^>=4.14.1.0,
@@ -132,8 +136,8 @@ test-suite unit-test
   type:    exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-    Test.MintRaffleTest ,
-    Test.LotteryTest
+    Spec.MintRaffleTest ,
+    Spec.LotteryTest
   hs-source-dirs:
     tests
   ghc-options: -threaded -rtsopts -with-rtsopts=-N

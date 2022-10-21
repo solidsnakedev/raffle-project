@@ -1,6 +1,6 @@
 {-# LANGUAGE NumericUnderscores  #-}
 
-module Test.MintRaffleTest where
+module Spec.MintRaffleTest where
 
 import Prelude
 import Plutus.V1.Ledger.Contexts (
