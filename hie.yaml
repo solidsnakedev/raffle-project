@@ -1,0 +1,6 @@
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:project-template"
+    - path: "./tests"
+      component: "unit-test:project-template"
