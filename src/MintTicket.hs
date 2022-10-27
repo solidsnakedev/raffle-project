@@ -45,9 +45,9 @@ mkPolicy utxo ctx = case mintedValue of
 
     validateMint :: TokenName -> Integer -> Bool
     validateMint tn amount =
-      hasUTxO utxo ctx &&
-      amount == 1 &&
-      validateTokenName tn &&
+      traceIfFalse "txoutref is not in script context" (hasUTxO utxo ctx) &&
+      traceIfFalse "minted amount is not 1" (amount == 1) &&
+      traceIfFalse "failed token validation" (validateTokenName tn) &&
       checkForOverflow ||
       amount == (-1)
 
