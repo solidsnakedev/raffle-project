@@ -182,9 +182,9 @@ tests = testGroup "- Lottery Test Cases"
           test1 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum1 Buy context1
           test2 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum2 Buy context2
           test3 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum3 Buy context3
-          test4 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum4 Claim context4
-          test5 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum5 Claim context5
-          test6 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum6 Close context6
+          test4 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum4 (Claim (TokenName "ticket-1")) context4
+          test5 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum5 (Claim (TokenName "ticket-2")) context5
+          test6 = Lottery.mkLotteryValidator (CurrencySymbol "ticket-currency-symbol") datum6 (Close (TokenName "ticket-2")) context6
 
 -------------------------
 -- Buy Ticket 1

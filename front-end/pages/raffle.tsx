@@ -234,7 +234,7 @@ const Raffle: NextPage = () => {
                 const newLotteryDatum = new
                     Constr (0, [
                         newDatum.lotteryTicketPrice,
-                        newDatum.lotteryRandomSeed + utf8ToHex("s"),
+                        newDatum.lotteryRandomSeed,
                         newDatum.lotteryMaxTicket,
                         newDatum.lotterySoldTicket + BigInt(1),
                         newDatum.lotteryMinimumHash,
@@ -297,7 +297,7 @@ const Raffle: NextPage = () => {
       console.log(walletUtxos)
       const ticketAssets = walletUtxos.map(utxo => (Object.keys(utxo.assets))).flat()
                           .filter(asset => asset.includes(mintTicketPolicyId))
-      console.log('tickets found :', ticketAssets)
+      console.log('tickets found in wallet:', ticketAssets)
 
       
       console.log("Claiming")
@@ -336,7 +336,26 @@ const Raffle: NextPage = () => {
                         newDatum.lotteryIntervals
                     ])
           console.log('new script datum(LotteryDatum): ', newLotteryDatum)
+          const datum = Data.to(newLotteryDatum)
+          console.log('new script datum(CBOR):', datum)
+          const validatorRedeemerData = new Constr (1,[tokenName])
+          console.log('validatorRedeemerData(Claim) :', validatorRedeemerData)
+          const validatorRedeemer = Data.to(validatorRedeemerData) // Claim redeemer
+          console.log('validatorRedeemer(Claim(CBOR)) : ', validatorRedeemer)
           
+          try {
+            const tx = await lucid.newTx()
+                       .collectFrom([scriptUtxos[0]],validatorRedeemer)
+                       .attachSpendingValidator(lotteryValidator)
+                       .payToContract(lotteryValidatorAdd, datum,{[unitRaffle]: BigInt(1)})
+                       .validTo(Date.now() + toMiliseconds(100))
+                       .complete()
+            const signedTx = await tx.sign().complete()
+            const txHash = signedTx.submit()
+            console.log('Transaction submited:', txHash)
+          } catch (err) {
+            alert(err)
+          }
 
         }
       } else {

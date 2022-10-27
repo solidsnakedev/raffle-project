@@ -100,7 +100,7 @@ instance Eq LotteryDatum where
 
 PlutusTx.unstableMakeIsData ''LotteryDatum
 
-data LotteryRedeemer = Buy | Claim | Close
+data LotteryRedeemer = Buy | Claim TokenName | Close TokenName
 
 PlutusTx.unstableMakeIsData ''LotteryRedeemer
 
@@ -121,28 +121,28 @@ mkLotteryValidator csMintTicket dat red ctx =
                 traceIfFalse "Lottery List is empty" isDatumLotteryListEmpty &&
                 traceIfFalse "Token name is not in Lottery List" isTokenInDatumLotteryList &&
                 traceIfFalse "Previous Tokens not included in Lottery List" hasPreviousTokens &&
-                traceIfFalse "Not enough funds to buy Ticket" isPayToScript &&
-                traceIfFalse "Only one user Utxo is allowed" isOneUser &&
-                traceIfFalse "Only one script Utxo is allowed" isOneScript &&
-                traceIfFalse "Can not Buy more tickets" (lotterySoldTicket outputDatum <= lotteryMaxTicket dat) &&
-                traceIfFalse "Buy dead line reached" isBuyPeriod
+               -- traceIfFalse "Not enough funds to buy Ticket" isPayToScript &&
+               -- traceIfFalse "Only one user Utxo is allowed" isOneUser &&
+               -- traceIfFalse "Only one script Utxo is allowed" isOneScript &&
+                traceIfFalse "Can not Buy more tickets" (lotterySoldTicket outputDatum <= lotteryMaxTicket dat) -- &&
+                --traceIfFalse "Buy dead line reached" isBuyPeriod
 
-        Claim -> traceIfFalse "Ticket price can not be changed" (lotteryTicketPrice dat == lotteryTicketPrice outputDatum) &&
+        Claim tokenNameRedeemer -> traceIfFalse "Ticket price can not be changed" (lotteryTicketPrice dat == lotteryTicketPrice outputDatum) &&
                  traceIfFalse "Random seed can not be changed" (lotteryRandomSeed dat  == lotteryRandomSeed outputDatum) &&
                  traceIfFalse "Max Ticket can not be changed" (lotteryMaxTicket dat == lotteryMaxTicket outputDatum) &&
                  traceIfFalse "Sold tickets can not be changed" (lotterySoldTicket dat  == lotterySoldTicket outputDatum) &&
                  traceIfFalse "Lottery List can not be changed" (lotteryTickets dat == lotteryTickets outputDatum) &&
                  traceIfFalse "Lottery Intervals can not be changed" (lotteryIntervals dat == lotteryIntervals outputDatum) &&
-                 traceIfFalse "Token was not purchased in Buy State" isTokenPurchased &&
-                 traceIfFalse "Expecting Minimun Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" validateMinHash &&
+                 traceIfFalse "Token was not purchased in Buy State" (isTokenPurchased tokenNameRedeemer) &&
+                 traceIfFalse "Expecting Minimun Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" (validateMinHash tokenNameRedeemer)&&
                  traceIfFalse "Result is not minimun than previous Hash" isMinHash &&
                  traceIfFalse "Funds in Script can not be spend until Close action" isFundInScript &&
-                 traceIfFalse "Can not Claim until all tickets are sold" (lotterySoldTicket dat == lotteryMaxTicket dat) &&
-                 traceIfFalse "Not Claim period" isClaimPeriod
+                 traceIfFalse "Can not Claim until all tickets are sold" (lotterySoldTicket dat == lotteryMaxTicket dat) -- &&
+                -- traceIfFalse "Not Claim period" isClaimPeriod
 
-        Close -> traceIfFalse "Can not Close until all tickets are sold" (lotterySoldTicket dat == lotteryMaxTicket dat) && -- Add expiration day instead
-                 traceIfFalse "Expecting Minimun Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" validateCloseMinHash &&
-                 traceIfFalse "Not Close period" isClosePeriod
+        Close tokenNameRedeemer -> traceIfFalse "Can not Close until all tickets are sold" (lotterySoldTicket dat == lotteryMaxTicket dat) && -- Add expiration day instead
+                 traceIfFalse "Expecting Minimun Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" (validateCloseMinHash tokenNameRedeemer) -- &&
+                -- traceIfFalse "Not Close period" isClosePeriod
 
     where
         txInfo' :: TxInfo
@@ -186,7 +186,7 @@ mkLotteryValidator csMintTicket dat red ctx =
 
         isPayToScript :: Bool
         isPayToScript =
-            adaOutput == adaInput + lotteryTicketPrice outputDatum
+            adaOutput >= adaInput + lotteryTicketPrice outputDatum
             where
                 adaOutput = valueOf (txOutValue ownOutput) adaSymbol adaToken
                 adaInput  = valueOf (txOutValue ownInput) adaSymbol adaToken
@@ -197,25 +197,26 @@ mkLotteryValidator csMintTicket dat red ctx =
         isOneScript :: Bool
         isOneScript = (length $ filter isJust $ toValidatorHash . txOutAddress . txInInfoResolved <$> (txInfoInputs $ txInfo')) == 1
 
-        isTokenPurchased :: Bool
-        isTokenPurchased = getSpentTicket `elem` lotteryTickets outputDatum
+        isTokenPurchased :: TokenName -> Bool
+        isTokenPurchased tokenNameRedeemer = (getSpentTicket tokenNameRedeemer) `elem` lotteryTickets outputDatum
         
-        getSpentTicket :: TokenName
-        getSpentTicket = 
+        getSpentTicket :: TokenName -> TokenName
+        getSpentTicket tokenNameRedeemer = 
             case value of
                 [(cs, tn, amnt)] -> tn
                 _ -> traceError "Only one Ticket is allowed"
             where
-                value = filter (\(cs, tn, amnt) -> cs == csMintTicket && amnt ==1 ) $ flattenValue $ valueSpent txInfo'
+                value = filter (\(cs, tn, amnt) -> cs == csMintTicket && amnt ==1 && tn == tokenNameRedeemer ) $ flattenValue $ valueSpent txInfo'
+                
 
-        validateMinHash :: Bool
-        validateMinHash =
+        validateMinHash :: TokenName -> Bool
+        validateMinHash tokenNameRedeemer =
             (expectedHash == minimumHash) &&
             minimumHash /= mempty
 
             where
                 minimumHash = lotteryMinimumHash outputDatum
-                TokenName bsSpentTicket = getSpentTicket
+                TokenName bsSpentTicket = getSpentTicket tokenNameRedeemer
                 expectedHash = sha2_256 (appendByteString bsSpentTicket $ consByteString (lotterySoldTicket outputDatum) (lotteryRandomSeed outputDatum))
 
         isMinHash :: Bool
@@ -230,13 +231,13 @@ mkLotteryValidator csMintTicket dat red ctx =
                 adaOutput = valueOf (txOutValue ownOutput) adaSymbol adaToken
                 adaInput  = valueOf (txOutValue ownInput) adaSymbol adaToken
 
-        validateCloseMinHash :: Bool
-        validateCloseMinHash =
+        validateCloseMinHash :: TokenName -> Bool
+        validateCloseMinHash tokenNameRedeemer =
             (expectedHash == minimumHash) &&
             minimumHash /= mempty
             where
                 minimumHash = lotteryMinimumHash dat
-                TokenName bsSpentTicket = getSpentTicket
+                TokenName bsSpentTicket = (getSpentTicket tokenNameRedeemer)
                 expectedHash = sha2_256 (appendByteString bsSpentTicket $ consByteString (lotterySoldTicket dat) (lotteryRandomSeed dat))
 
         -- Contract Period
