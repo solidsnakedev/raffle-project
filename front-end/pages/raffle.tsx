@@ -66,20 +66,20 @@ const Raffle: NextPage = () => {
 
   const getUtxos = async () => {
     if (lucid) {
-      const utxos = await lucid.utxosAt(scriptAddress);
-      if (utxos.length > 0) {
-        utxos.map(async (value: any) => {
-          console.log(value.txHash)
-        });
-      } else {
-        console.log("no utxos in script")
-      }
+      // const utxos = await lucid.utxosAt(scriptAddress);
+      // if (utxos.length > 0) {
+      //   utxos.map(async (value: any) => {
+      //     console.log(value.txHash)
+      //   });
+      // } else {
+      //   console.log("no utxos in script")
+      // }
 
 
       console.log(helios.bytesToHex(helios_internal.Crypto.sha2_256(helios_internal.stringToBytes("asda"))))
 
       console.log(lucid.utils.unixTimeToSlot(Date.now() + 1000000))
-
+      console.log(helios.deserializeUplc(`{"type":"PlutusScriptV1", "cborHex": "${lotteryValidator.script}"}`).toString())
       // amount.map(async (asset: any) => {
       //console.log(utxos);
     }
@@ -254,7 +254,7 @@ const Raffle: NextPage = () => {
                 const mintingRedeemerData = new Constr (0, [ walletTxHashData , BigInt(walletOutputIndex)]) // refers TxOutRef constructor in PlutusTx
                 const mintingRedeemer = Data.to(mintingRedeemerData) // TxOutRef to CBOR
                 console.log('mintingRedeemerData(TxOutRef) : ', mintingRedeemerData)
-                const lovelace : Lovelace = BigInt(10000000)
+                const lovelace : Lovelace = BigInt(32000000)
                 //const lovelace  = ""
                 console.log('mintingRedeemer(CBOR) : ', mintingRedeemer)
                 try {
@@ -266,6 +266,9 @@ const Raffle: NextPage = () => {
                              .payToContract(lotteryValidatorAdd, datum,{lovelace, [unitRaffle]: BigInt(1)})
                              .validTo(Date.now() + toMiliseconds(100))
                              .complete()
+                  console.log(await lucid.provider.getProtocolParameters())
+                  //console.log(min_fee(tx,['minFeeA'],))
+                  // lucid.txBuilderConfig.
                   const signedTx = await tx.sign().complete()
                   const txHash = signedTx.submit()
                   console.log('Transaction submited:', txHash)
@@ -289,6 +292,7 @@ const Raffle: NextPage = () => {
 
   const claim = async () => {
     if (lucid){
+      console.log("Claiming")
       const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
       const unitRaffle : Unit = rafflePolicyId + utf8ToHex ("RaffleNFT #1")
       const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
@@ -300,7 +304,6 @@ const Raffle: NextPage = () => {
       console.log('tickets found in wallet:', ticketAssets)
 
       
-      console.log("Claiming")
       if (walletUtxos.length && scriptUtxos.length > 0) {
         if (scriptUtxos[0].datumHash) {
           const utxoDatum = Data.from (await lucid.datumOf(scriptUtxos[0])) // from CBOR to PlutusData/Json
@@ -314,7 +317,7 @@ const Raffle: NextPage = () => {
             lotteryTickets : utxoDatum.fields[5],
             lotteryIntervals : utxoDatum.fields[6]
           }
-          const tokenName = ticketAssets[0].slice(56)
+          const tokenName = ticketAssets[2].slice(56)
           const tokenNameBytes = helios.hexToBytes(tokenName)
           console.log('tokenName(Bytes):', tokenNameBytes)
           //sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)
@@ -347,8 +350,52 @@ const Raffle: NextPage = () => {
             const tx = await lucid.newTx()
                        .collectFrom([scriptUtxos[0]],validatorRedeemer)
                        .attachSpendingValidator(lotteryValidator)
-                       .payToContract(lotteryValidatorAdd, datum,{[unitRaffle]: BigInt(1)})
+                       .payToContract(lotteryValidatorAdd, datum,scriptUtxos[0].assets)
                        .validTo(Date.now() + toMiliseconds(100))
+                       .complete()
+            const signedTx = await tx.sign().complete()
+            const txHash = signedTx.submit()
+            console.log('Transaction submited:', txHash)
+          } catch (err) {
+            alert(err)
+          }
+
+        }
+      } else {
+        alert('no utxos found in loterry validator address : ' + lotteryValidatorAdd)
+      }
+    }
+  }
+
+  const close = async () => {
+    if (lucid){
+      console.log("Closing")
+      const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
+      const unitRaffle : Unit = rafflePolicyId + utf8ToHex ("RaffleNFT #1")
+      const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
+      const scriptUtxos = await lucid.utxosAtWithUnit(lotteryValidatorAdd, unitRaffle);
+      const walletUtxos = await lucid.wallet.getUtxos()
+      console.log(walletUtxos)
+      const ticketAssets = walletUtxos.map(utxo => (Object.keys(utxo.assets))).flat()
+                          .filter(asset => asset.includes(mintTicketPolicyId))
+      console.log('tickets found in wallet:', ticketAssets.map(asset =>(asset.slice(56))))
+
+      
+      if (walletUtxos.length && scriptUtxos.length > 0) {
+        if (scriptUtxos[0].datumHash) {
+          const utxoDatum = Data.from (await lucid.datumOf(scriptUtxos[0])) // from CBOR to PlutusData/Json
+          console.log('script datum found(LotteryDatum) : ', utxoDatum)
+          const tokenName = ticketAssets[2].slice(56)
+          const validatorRedeemerData = new Constr (2,[tokenName])
+          console.log('validatorRedeemerData(Claim) :', validatorRedeemerData)
+          const validatorRedeemer = Data.to(validatorRedeemerData) // Close redeemer
+          console.log('validatorRedeemer(Claim(CBOR)) : ', validatorRedeemer)
+          
+          try {
+            const tx = await lucid.newTx()
+                       .collectFrom([scriptUtxos[0]].concat(walletUtxos),validatorRedeemer)
+                       .attachSpendingValidator(lotteryValidator)
+                       .validTo(Date.now() + toMiliseconds(1000))
                        .complete()
             const signedTx = await tx.sign().complete()
             const txHash = signedTx.submit()
@@ -391,6 +438,7 @@ const Raffle: NextPage = () => {
         <button className="btn btn-secondary m-5" onClick={() => { startRaffle() }}>Start Raffle</button>
         <button className="btn btn-secondary m-5" onClick={() => { buyTicket() }}>Buy Ticket</button>
         <button className="btn btn-secondary m-5" onClick={() => { claim() }}>Claim</button>
+        <button className="btn btn-secondary m-5" onClick={() => { close() }}>Close</button>
       </div>
     </div>
   )
