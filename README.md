@@ -17,7 +17,7 @@ Due to the deterministic nature of the `Extended UTXO Model` (EUTXO) it is hard 
 ### 1) Secret-Reveal-Draw method
 
 Users generate a hashed secret number and store it in a list
-$
+```math
 secret \quad numbers =
 \begin{bmatrix}
     s_0 \\
@@ -25,7 +25,10 @@ secret \quad numbers =
     \vdots \\
     s_i
 \end{bmatrix}
-$
+```
+
+$$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+
 
 where :
 
