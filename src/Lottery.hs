@@ -74,7 +74,7 @@ data LotteryDatum = LotteryDatum
 -- contains (to 90) (to 90) -- arguments #1 deadline #2 slotnumber -> PASS
 -- contains (to 90) (to 91) -- arguments #1 deadline #2 slotnumber -> FAIL
 
--- Claim logic - In betwwen
+-- Claim logic - In between
 -- overlaps (interval 90 100) (to 89) && --arguments #1 deadline #2 starttime #3 slotnumber -> PASS
 -- Plutus.V1.Ledger.Interval.after 100 (to 89)  -- arguments #1 startime #2 slotnumber
 -- (\ x y z -> overlaps (interval x y) (to z) && Plutus.V1.Ledger.Interval.after y (to z)) 90 100 102
@@ -133,15 +133,15 @@ mkLotteryValidator csMintTicket dat red ctx =
                  traceIfFalse "Sold tickets can not be changed" (lotterySoldTicket dat  == lotterySoldTicket outputDatum) &&
                  traceIfFalse "Lottery List can not be changed" (lotteryTickets dat == lotteryTickets outputDatum) &&
                  traceIfFalse "Lottery Intervals can not be changed" (lotteryIntervals dat == lotteryIntervals outputDatum) &&
-                 -- traceIfFalse "Token was not purchased in Buy State" (isTokenPurchased tokenNameRedeemer) &&
-                 -- traceIfFalse "Expecting Minimun Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" (validateMinHash tokenNameRedeemer)&&
-                 traceIfFalse "Result is not minimun than previous Hash" isMinHash &&
+                 traceIfFalse "Token was not purchased in Buy State" (isTokenPurchased tokenNameRedeemer) &&
+                 -- traceIfFalse "Expecting Minimum Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" (validateMinHash tokenNameRedeemer)&&
+                 traceIfFalse "Result is not minimum than previous Hash" isMinHash &&
                  traceIfFalse "Funds in Script can not be spend until Close action" isFundInScript &&
                  traceIfFalse "Can not Claim until all tickets are sold" (lotterySoldTicket dat == lotteryMaxTicket dat) -- &&
                 -- traceIfFalse "Not Claim period" isClaimPeriod
 
         Close tokenNameRedeemer -> traceIfFalse "Can not Close until all tickets are sold" (lotterySoldTicket dat == lotteryMaxTicket dat) && -- Add expiration day instead
-                 traceIfFalse "Expecting Minimun Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" (validateCloseMinHash tokenNameRedeemer) -- &&
+                 traceIfFalse "Expecting Minimum Hash sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)" (validateCloseMinHash tokenNameRedeemer) -- &&
                 -- traceIfFalse "Not Close period" isClosePeriod
 
     where
@@ -184,6 +184,7 @@ mkLotteryValidator csMintTicket dat red ctx =
             in 
             lotteryTickets dat == take (len - 1) (lotteryTickets outputDatum)
 
+        -- TODO: need to check that only ADA value and Raffle NFT value goes to the script
         isPayToScript :: Bool
         isPayToScript =
             adaOutput >= adaInput + lotteryTicketPrice outputDatum
@@ -256,7 +257,7 @@ mkLotteryValidator csMintTicket dat red ctx =
             overlaps (interval startPeriod endPeriod) range &&
             after endPeriod range
             where
-                startPeriod = fst $ lotteryIntervals outputDatum -- these are contants
+                startPeriod = fst $ lotteryIntervals outputDatum -- these are constants
                 endPeriod   = snd $ lotteryIntervals outputDatum
                 range = txInfoValidRange txInfo'
 
@@ -264,7 +265,7 @@ mkLotteryValidator csMintTicket dat red ctx =
         isClosePeriod =
             contains (from startPeriod) range
             where
-                startPeriod = snd $ lotteryIntervals dat -- these are contants
+                startPeriod = snd $ lotteryIntervals dat -- these are constants
                 range = txInfoValidRange txInfo'
 
 data Typed
