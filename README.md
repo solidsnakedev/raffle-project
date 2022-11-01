@@ -111,7 +111,8 @@ $$
 Hash[tn [st \quad rs]]
 \end{equation}
 $$
-where
+
+$where :$
 
 $\text{tn = token name}$
 
