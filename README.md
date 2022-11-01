@@ -59,7 +59,6 @@ $$
 After the reveal period ends, just the users who reveal the secret number can participate and compute the random number using a function like modulo.
 
 $$
-
 \begin{equation}
 \text{random number =}
 \left(\sum_{i=0}^{j} r_i\right) \bmod k
