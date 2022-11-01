@@ -16,28 +16,36 @@ Due to the deterministic nature of the `Extended UTXO Model` (EUTXO) it is hard 
 
 ### 1) Secret-Reveal-Draw method
 
-Users generate a hashed secret number and store it in a list
-```math
-secret \quad numbers =
+This process can be divided in 3 periods
+
+#### Secret Period
+
+Every user commits to:
+
+ 1. send funds to pay for the ticket
+ 2. generate a hashed random number
+ 3. save the hashed number in the list of secret numbers.
+
+$$
+\text{secret numbers =}
 \begin{bmatrix}
     s_0 \\
     s_1 \\
     \vdots \\
     s_i
 \end{bmatrix}
-```
-
-$$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
-
+$$
 
 where :
 
 $s$ = hashed secret number
 
-After some deadline all the user should reveal their numbers and store it in a new list, then a computation like the modulo of the sum of all revealed numbers can be made to select the winner.
+#### Reveal Period
+
+After secret period deadline all the user should reveal their numbers and store it in a new list
 
 $$
-revealed \quad numbers =
+\text{revealed numbers =}
 \begin{bmatrix}
     r_0 \\
     r_1 \\
@@ -46,14 +54,19 @@ revealed \quad numbers =
 \end{bmatrix}
 $$
 
+#### Draw Winner
+
+After the reveal period ends, just the users who reveal the secret number can participate and compute the random number using a function like modulo.
+
 $$
-random \quad number =
+
 \begin{equation}
+\text{random number =}
 \left(\sum_{i=0}^{j} r_i\right) \bmod k
 \end{equation}
 $$
 
-where:
+$where :$
 
 $j$ = array length
 
@@ -61,45 +74,17 @@ $i$ = array index
 
 $k$ = number of participants that reveal the secret number
 
-This process can be divided in 3 periods
-
-#### Secret Period
-
-Every user commits to:
-
- 1. send funds to pay for the ticket
- 2. generate a random number, this number is then hashed with an algorithm like sha256
- 3. save the hashed number in the list of secret numbers.
-
-#### Reveal Period
-
-At certain point all users are encourage to reveal the secret number so they can get the prize.
-Every user can :
-
- 1. reveal the secret number if this one match the number is the secret list.
-
-#### Draw Winner
-
-Once the reveal period ends, just the users who reveal the secret number can participate and chose an algorithm to select the winner within the list with the collection of all the random numbers.
-One solution could be using the modulo
-where
-    [a] = list of user that reveal the number
-    [n] = collection of reveal numbers
-     w =  winner
-     i = index of list of user
-     w = sum[n] % [a]
-
 #### Conclusion
 
-Although this approach looks feasible and random, this can be quite expensive and slow, due to the fact that every user must reveal the secret number with a new transaction.
+Although this approach looks feasible and truly random, this can be quite expensive and slow, due to the fact that every single user must reveal the secret number by making a new transaction.
 
-### 2) Oracle
+### 2) Oracle method
 
 An oracle is a good way to delegate the responsibility of drawing a random number, therefore there must be a verifiable mechanism to trust a third party provider to prove the number is randomly generated.
 A decent solution could be having a oracle script using the VRF function to generate a random number and at the same time the player can prove this number was correctly generated.
 More on this. [link to VRF](https://en.wikipedia.org/wiki/Verifiable_random_function)
 
-Conclusion:
+#### Conclusion:
 
 Currently there's no such a thing like VRF function in plutus, therefore you can not build this solution yet.
 
@@ -142,7 +127,7 @@ sha2_256 (appendByteString ticketName $ consByteString soldTickets randomSeed)
 ```
 
 Conclusion :
-There is a limited period where every user can individually calculate and claim to have the minimum hash, this considerably reduce the amount of interactions with the script as the computation happens off-chain.
+Any user claim to have the minimum hash without the need to submit another transaction, this considerably reduce the amount of interactions with the script as this computation happens off-chain.
 
 ## Cardano Raffle - Minimum hash method
 
