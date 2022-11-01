@@ -45,12 +45,14 @@ revealed \quad numbers =
     r_i
 \end{bmatrix}
 $$
+
 $$
 random \quad number =
 \begin{equation}
 \left(\sum_{i=0}^{j} r_i\right) \bmod k
 \end{equation}
 $$
+
 where:
 
 $j$ = array length
