@@ -17,7 +17,7 @@ Due to the deterministic nature of the `Extended UTXO Model` (EUTXO) it is hard 
 ### 1) Secret-Reveal-Draw method
 
 Users generate a hashed secret number and store it in a list
-$$
+$
 secret \quad numbers =
 \begin{bmatrix}
     s_0 \\
@@ -25,7 +25,7 @@ secret \quad numbers =
     \vdots \\
     s_i
 \end{bmatrix}
-$$
+$
 
 where :
 
@@ -148,7 +148,7 @@ Datum is used as a shared state of the game where :
 
 - ticket price : the value in ADA the user has to paid to get a ticket
 - random seed : random bytestring used to compute the minimum hash
-- max ticket : maximum amout of ticket to be sold
+- max ticket : maximum amount of ticket to be sold
 - sold ticket : mutable value 
 - minimum hash : value inserted by the user claiming to have the min hash
 - tickets : list of sold tickets 
