@@ -4,7 +4,7 @@ import NftCard from './NftCard'
 
 const NftGrid = (props : any) => {
     useEffect(()=>{
-console.log(props)
+console.log('props', props)
     },[props])
     return (
         <>

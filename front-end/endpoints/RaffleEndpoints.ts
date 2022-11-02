@@ -1,95 +1,32 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import WalletConnect from '../components/WalletConnect'
-import { useStoreActions, useStoreState } from "../utils/store"
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { getAssets } from "../utils/cardano";
-import NftGrid from "../components/NftGrid";
-import initLucid from '../utils/lucid'
-import { Lucid, TxHash, Lovelace, Constr, SpendingValidator, Data, utf8ToHex, Script, MintingPolicy, Datum, datumJsonToCbor, toHex, sha256, concat, Unit, hexToUtf8 } from 'lucid-cardano'
-import * as helios from '@hyperionbt/helios'
-import {exportedForTesting as helios_internal} from '@hyperionbt/helios'
-import { min_fee } from 'lucid-cardano/types/src/core/wasm_modules/cardano_multiplatform_lib_web/cardano_multiplatform_lib'
-import { sign } from 'crypto'
-import { setPriority } from 'os'
 import { mintTicketValidator, lotteryValidator } from '../utils/validators'
-import { Console } from 'console'
+import {exportedForTesting as helios_internal} from '@hyperionbt/helios'
+import * as helios from '@hyperionbt/helios'
+import { Lucid, TxHash, Lovelace, Constr, SpendingValidator, Data, utf8ToHex, Script, MintingPolicy, Datum, datumJsonToCbor, toHex, sha256, concat, Unit, hexToUtf8 } from 'lucid-cardano'
 
-
-const Raffle: NextPage = () => {
-  const walletStore = useStoreState((state: any) => state.wallet)
-  const [nftList, setNftList] = useState([])
-  const [lucid, setLucid] = useState<Lucid>()
-  const [script, setScript] = useState<SpendingValidator>()
-  const [scriptAddress, setScriptAddress] = useState("")
-  const [rafflePolicyId, setRafflePolicyId] = useState("")
-  const [rafflePolicy, setRafflePolicy]= useState<Script>({type: "Native", script:""})
-  const [ticketPrice, setTicketPrice] = useState(10000000)
-  const [randomSeed, setRandomSeed ] = useState("adadadsds")
-  const [maxTicket, setMaxTicket] = useState(3)
-  const [minimumHash, setMinimumHash] = useState("")
-  const [tickets, setTickets] = useState([])
-
-  useEffect(() => {
-    if (lucid) {
-      /**
-      * One shot function to Initialise raffle policy.
-      */
-      const initRafflePolicy = async () => {
-        const {paymentCredential} = lucid.utils.getAddressDetails(await lucid.wallet.address());
-        const mintingPolicy = lucid.utils.nativeScriptFromJson(
-          {
-              type: "sig",
-              keyHash: paymentCredential?.hash
-          }
-        )
-        console.log('minting policy : ', mintingPolicy)
-        const policyId = lucid.utils.mintingPolicyToId(
-            mintingPolicy,
-        );
-        setRafflePolicyId(policyId)
-        setRafflePolicy(mintingPolicy)
-      }
-      initRafflePolicy()
-    } else {
-      initLucid(walletStore.name).then((Lucid: Lucid) => { setLucid(Lucid) })
-    }
-  }, [lucid])
-  
   /**
     * Convert seconds to miliseconds.
     */
-  const toMiliseconds = (seconds : number) => {
+const toMilliseconds = (seconds : number) => {
     return Math.floor(seconds * 1000)
   }
 
-  const getUtxos = async () => {
-    if (lucid) {
-      // const utxos = await lucid.utxosAt(scriptAddress);
-      // if (utxos.length > 0) {
-      //   utxos.map(async (value: any) => {
-      //     console.log(value.txHash)
-      //   });
-      // } else {
-      //   console.log("no utxos in script")
-      // }
 
+export const testEndpoint = async (lucid: Lucid ): Promise<void> => {
+    if (lucid) {
 
       console.log(helios.bytesToHex(helios_internal.Crypto.sha2_256(helios_internal.stringToBytes("asda"))))
 
       console.log(lucid.utils.unixTimeToSlot(Date.now() + 1000000))
       console.log(helios.deserializeUplc(`{"type":"PlutusScriptV1", "cborHex": "${lotteryValidator.script}"}`).toString())
-      // amount.map(async (asset: any) => {
-      //console.log(utxos);
+
     }
   }
 
-  const mintRaffle = async () => {
+export const mintRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid) {
         console.log("minting raffle")
         console.log('raffle name : ', utf8ToHex("RaffleNFT #1"))
-
+        const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
         const unit = rafflePolicyId + utf8ToHex("RaffleNFT #1");
         console.log('Raffle Unit : ', unit)
         
@@ -98,20 +35,19 @@ const Raffle: NextPage = () => {
 
         const tx = await lucid.newTx().
                          mintAssets(asset).
-                         validTo(Date.now()+toMiliseconds(100)).
+                         validTo(Date.now()+toMilliseconds(100)).
                          attachMintingPolicy(rafflePolicy).
                          complete();
         const signedTx = await tx.sign().complete();
         const txHash = await signedTx.submit();
-        console.log('Transaction submited:', txHash)
+        console.log('Transaction submitted:', txHash)
     }
   }
 
-
-  const burnRaffle = async () => {
+export const burnRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid) {
         console.log("burning raffle")
-
+        const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
         const unit = rafflePolicyId + utf8ToHex("RaffleNFT #1");
         console.log('Raffle Unit : ', unit)
     
@@ -121,72 +57,19 @@ const Raffle: NextPage = () => {
         const tx = 
             await lucid.newTx().
             mintAssets(asset).
-            validTo(Date.now()+ toMiliseconds(100)).
+            validTo(Date.now()+ toMilliseconds(100)).
             attachMintingPolicy(rafflePolicy).
             complete();
         const signedTx = await tx.sign().complete();
         const txHash = await signedTx.submit();
-        console.log('Transaction submited:', txHash)
+        console.log('Transaction submitted:', txHash)
     }
   }
 
-  const burnTickets = async () => {
-    if (lucid) {
-      console.log("burning tickets")
-
-      const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
-      const walletUtxos = await lucid.wallet.getUtxos()
-      console.log(walletUtxos)
-      const ticketAssets = walletUtxos.map(utxo => (Object.keys(utxo.assets))).flat()
-                          .filter(asset => asset.includes(mintTicketPolicyId))
-      console.log(ticketAssets)
-      const assetsToBurn = ticketAssets.reduce((result, item) => {
-        return { ...result, [item]: BigInt(-1)}
-      },{})
-
-      console.log(assetsToBurn)
-
-      const assetsToBurnList = ticketAssets.map(asset => { return {[asset]: BigInt(1)}})
-      console.log(assetsToBurnList)
-      
-      const walletTxHash = walletUtxos[0].txHash
-      const walletOutputIndex = walletUtxos[0].outputIndex
-      const txHashBytes = helios.hexToBytes(walletTxHash) // helios
-      console.log('txHashBytes : ', txHashBytes)
-      //const id = new Uint8Array([walletOutputIndex])  // lucid
-      const id = walletOutputIndex
-      //const tokenName = concat(id,txhash) // lucid
-      const tokenName = [id].concat(txHashBytes) // concatenate uint8 numbers
-      console.log('concat : ', tokenName)
-      //const sha = sha256(tokenName) // sha256 from lucid
-      const hashedTokenNameBytes = helios_internal.Crypto.sha2_256(tokenName) //sha256 from helios
-      console.log('hashedTokenNameBytes : ', hashedTokenNameBytes)
-      //console.log('hex : ', toHex(new Uint8Array(sha))) // Lucid
-      const hashedTokenName = helios.bytesToHex(hashedTokenNameBytes)
-      console.log('hashedTokenName : ', hashedTokenName)
-
-      const walletTxHashData = new Constr (0, [walletUtxos[0].txHash]) // refers to TxId Constructor in PlutusTx
-      const mintingRedeemerData = new Constr (0, [ walletTxHashData , BigInt(walletUtxos[0].outputIndex)]) // refers TxOutRef constructor in PlutusTx
-      const mintingRedeemer = Data.to(mintingRedeemerData) // TxOutRef to CBOR
-
-      const unitTicket = mintTicketPolicyId + hashedTokenName
-      const assetTicket = {[unitTicket]: BigInt(1)}
-      const tx = 
-          await lucid.newTx().
-          mintAssets(assetTicket, mintingRedeemer).
-          attachMintingPolicy(mintTicketValidator).
-          validTo(Date.now()+ toMiliseconds(100)).
-          complete();
-
-      const signedTx = await tx.sign().complete();
-      const txHash = await signedTx.submit();
-      console.log('Transaction submited:', txHash)
-    }
-  }
-
-  const startRaffle = async () => {
+export const startRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid) {
         console.log("starting raffle")
+        const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
         console.log('raffle policy id : ', rafflePolicyId)
         const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
         console.log('lottery validator address : ', lotteryValidatorAdd)
@@ -200,8 +83,8 @@ const Raffle: NextPage = () => {
         // [buy period] | [claim period] | [close period]
         // ------------ 2 -------------- 4 --------------
         const lotteryIntervals = new Constr (0,[
-            BigInt(Date.now()+ toMiliseconds(600)), // 10 minutes
-            BigInt(Date.now()+ toMiliseconds(1200)) //  20 minutes
+            BigInt(Date.now()+ toMilliseconds(600)), // 10 minutes
+            BigInt(Date.now()+ toMilliseconds(1200)) //  20 minutes
         ])
         
         const lotteryDatum =
@@ -216,7 +99,7 @@ const Raffle: NextPage = () => {
         ])
         console.log('lottery datum (PlutusData) : ', lotteryDatum)
 
-        const datum = Data.to(lotteryDatum) // serialise to CBOR
+        const datum = Data.to(lotteryDatum) // serialize to CBOR
         console.log('lottery datum (CBOR) : ', datum)
         
         //console.log(lucid.utils.unixTimeToSlot(Date.now()))
@@ -234,7 +117,7 @@ const Raffle: NextPage = () => {
                 complete()
         
             const txHash = signedTx.submit()
-            console.log('Transaction submited:', txHash)
+            console.log('Transaction submitted:', txHash)
 
         } else {
             alert('Raffle not found in wallet address')
@@ -243,10 +126,11 @@ const Raffle: NextPage = () => {
     }
   }
 
-  const buyTicket = async () => {
+export const buyTicket = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid){
         const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
         console.log('lottery validator address : ', lotteryValidatorAdd)
+        const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
         const unitRaffle : Unit = rafflePolicyId + utf8ToHex ("RaffleNFT #1")
         const assetRaffle = {[unitRaffle]: BigInt(1)}
         const scriptUtxos = await lucid.utxosAtWithUnit(lotteryValidatorAdd, unitRaffle);
@@ -308,24 +192,23 @@ const Raffle: NextPage = () => {
                 const mintingRedeemerData = new Constr (0, [ walletTxHashData , BigInt(walletOutputIndex)]) // refers TxOutRef constructor in PlutusTx
                 const mintingRedeemer = Data.to(mintingRedeemerData) // TxOutRef to CBOR
                 console.log('mintingRedeemerData(TxOutRef) : ', mintingRedeemerData)
+                // TODO: set a proper ticket price, it's hardcoded for now
                 const lovelace : Lovelace = BigInt(32000000)
-                //const lovelace  = ""
                 console.log('mintingRedeemer(CBOR) : ', mintingRedeemer)
                 try {
+                // TODO: use txBuilderConfig to calculate minfee manually, remember to convert tx to bytes and apply fee formula with minFeeA and minFeeB
                   const tx = await lucid.newTx()
                              .collectFrom([scriptUtxos[0],walletUtxos[0]],validatorRedeemer)
                              .attachSpendingValidator(lotteryValidator)
                              .attachMintingPolicy(mintTicketValidator)
                              .mintAssets(assetTicket, mintingRedeemer)
                              .payToContract(lotteryValidatorAdd, datum,{lovelace, [unitRaffle]: BigInt(1)})
-                             .validTo(Date.now() + toMiliseconds(100))
+                             .validTo(Date.now() + toMilliseconds(100))
                              .complete()
                   console.log(await lucid.provider.getProtocolParameters())
-                  //console.log(min_fee(tx,['minFeeA'],))
-                  // lucid.txBuilderConfig.
                   const signedTx = await tx.sign().complete()
                   const txHash = signedTx.submit()
-                  console.log('Transaction submited:', txHash)
+                  console.log('Transaction submitted:', txHash)
                 } catch (err) {
                   alert(err)
                 }
@@ -339,15 +222,16 @@ const Raffle: NextPage = () => {
             }
         }
         else {
-            alert('no utxos found in loterry validator address : ' + lotteryValidatorAdd)
+            alert('No utxos found in lottery validator address : ' + lotteryValidatorAdd)
         }
         
   }}
 
-  const claim = async () => {
+export const claim = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid){
       console.log("Claiming")
       const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
+      const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
       const unitRaffle : Unit = rafflePolicyId + utf8ToHex ("RaffleNFT #1")
       const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
       const scriptUtxos = await lucid.utxosAtWithUnit(lotteryValidatorAdd, unitRaffle);
@@ -377,9 +261,9 @@ const Raffle: NextPage = () => {
           //sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)
           const pseudoRandomNumber = [Number(newDatum.lotterySoldTicket)].concat(helios.hexToBytes(newDatum.lotteryRandomSeed))
           console.log('Pseudo Random number(Bytes) :',pseudoRandomNumber)
-          const claimMinimunHashBytes = helios_internal.Crypto.sha2_256(tokenNameBytes.concat(pseudoRandomNumber))
-          console.log('claimMinimumHashBytes(Bytes):', claimMinimunHashBytes)
-          const claimMinimumHash = helios.bytesToHex(claimMinimunHashBytes)
+          const claimMinimumHashBytes = helios_internal.Crypto.sha2_256(tokenNameBytes.concat(pseudoRandomNumber))
+          console.log('claimMinimumHashBytes(Bytes):', claimMinimumHashBytes)
+          const claimMinimumHash = helios.bytesToHex(claimMinimumHashBytes)
           console.log('claimMinimumHash(Hex) :',claimMinimumHash )
 
           const newLotteryDatum = new
@@ -405,11 +289,11 @@ const Raffle: NextPage = () => {
                        .collectFrom([scriptUtxos[0]],validatorRedeemer)
                        .attachSpendingValidator(lotteryValidator)
                        .payToContract(lotteryValidatorAdd, datum,scriptUtxos[0].assets)
-                       .validTo(Date.now() + toMiliseconds(100))
+                       .validTo(Date.now() + toMilliseconds(100))
                        .complete()
             const signedTx = await tx.sign().complete()
             const txHash = signedTx.submit()
-            console.log('Transaction submited:', txHash)
+            console.log('Transaction submitted:', txHash)
           } catch (err) {
             alert(err)
           }
@@ -421,10 +305,11 @@ const Raffle: NextPage = () => {
     }
   }
 
-  const close = async () => {
+export const closeRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid){
       console.log("Closing")
       const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
+      const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
       const unitRaffle : Unit = rafflePolicyId + utf8ToHex ("RaffleNFT #1")
       const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
       const scriptUtxos = await lucid.utxosAtWithUnit(lotteryValidatorAdd, unitRaffle);
@@ -449,54 +334,72 @@ const Raffle: NextPage = () => {
             const tx = await lucid.newTx()
                        .collectFrom([scriptUtxos[0]].concat(walletUtxos),validatorRedeemer)
                        .attachSpendingValidator(lotteryValidator)
-                       .validTo(Date.now() + toMiliseconds(1000))
+                       .validTo(Date.now() + toMilliseconds(1000))
                        .complete()
             const signedTx = await tx.sign().complete()
             const txHash = signedTx.submit()
-            console.log('Transaction submited:', txHash)
+            console.log('Transaction submitted:', txHash)
           } catch (err) {
             alert(err)
           }
 
         }
       } else {
-        alert('no utxos found in loterry validator address : ' + lotteryValidatorAdd)
+        alert('no utxos found in lottery validator address : ' + lotteryValidatorAdd)
       }
     }
   }
 
-// <input  name="ticket price" defaultValue={ticketPrice} onChange={e => setTicketPrice(parseInt (e.target.value))} />
-  return (
-    <div className="px-10">
-      <div className="navbar bg-base-100">
-        <div className="flex-1">
-          <Link href="/">
-            <button className="btn normal-case text-xl"> Home </button>
-          </Link>
-        </div>
-        
-        <div className="flex-none">
-          <WalletConnect />
-        </div>
-      </div>
-      <div>Address: {walletStore.address}</div>
-      <div className='m-10'>
-        <p>
-        </p>
+//   const burnTickets = async () => {
+//     if (lucid) {
+//       console.log("burning tickets")
 
-      </div>
-      <div className="mx-40 my-10">
-        <button className="btn btn-secondary m-5" onClick={() => { mintRaffle() }}>Mint Raffle</button>
-        <button className="btn btn-secondary m-5" onClick={() => { burnRaffle() }}>Burn Raffle</button>
-        <button className="btn btn-secondary m-5" onClick={() => { burnTickets() }}>Burn Tickets</button>
-        <button className="btn btn-secondary m-5" onClick={() => { getUtxos() }}>Get Utxo</button>
-        <button className="btn btn-secondary m-5" onClick={() => { startRaffle() }}>Start Raffle</button>
-        <button className="btn btn-secondary m-5" onClick={() => { buyTicket() }}>Buy Ticket</button>
-        <button className="btn btn-secondary m-5" onClick={() => { claim() }}>Claim</button>
-        <button className="btn btn-secondary m-5" onClick={() => { close() }}>Close</button>
-      </div>
-    </div>
-  )
-}
+//       const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
+//       const walletUtxos = await lucid.wallet.getUtxos()
+//       console.log(walletUtxos)
+//       const ticketAssets = walletUtxos.map(utxo => (Object.keys(utxo.assets))).flat()
+//                           .filter(asset => asset.includes(mintTicketPolicyId))
+//       console.log(ticketAssets)
+//       const assetsToBurn = ticketAssets.reduce((result, item) => {
+//         return { ...result, [item]: BigInt(-1)}
+//       },{})
 
-export default Raffle
+//       console.log(assetsToBurn)
+
+//       const assetsToBurnList = ticketAssets.map(asset => { return {[asset]: BigInt(1)}})
+//       console.log(assetsToBurnList)
+      
+//       const walletTxHash = walletUtxos[0].txHash
+//       const walletOutputIndex = walletUtxos[0].outputIndex
+//       const txHashBytes = helios.hexToBytes(walletTxHash) // helios
+//       console.log('txHashBytes : ', txHashBytes)
+//       //const id = new Uint8Array([walletOutputIndex])  // lucid
+//       const id = walletOutputIndex
+//       //const tokenName = concat(id,txhash) // lucid
+//       const tokenName = [id].concat(txHashBytes) // concatenate uint8 numbers
+//       console.log('concat : ', tokenName)
+//       //const sha = sha256(tokenName) // sha256 from lucid
+//       const hashedTokenNameBytes = helios_internal.Crypto.sha2_256(tokenName) //sha256 from helios
+//       console.log('hashedTokenNameBytes : ', hashedTokenNameBytes)
+//       //console.log('hex : ', toHex(new Uint8Array(sha))) // Lucid
+//       const hashedTokenName = helios.bytesToHex(hashedTokenNameBytes)
+//       console.log('hashedTokenName : ', hashedTokenName)
+
+//       const walletTxHashData = new Constr (0, [walletUtxos[0].txHash]) // refers to TxId Constructor in PlutusTx
+//       const mintingRedeemerData = new Constr (0, [ walletTxHashData , BigInt(walletUtxos[0].outputIndex)]) // refers TxOutRef constructor in PlutusTx
+//       const mintingRedeemer = Data.to(mintingRedeemerData) // TxOutRef to CBOR
+
+//       const unitTicket = mintTicketPolicyId + hashedTokenName
+//       const assetTicket = {[unitTicket]: BigInt(1)}
+//       const tx = 
+//           await lucid.newTx().
+//           mintAssets(assetTicket, mintingRedeemer).
+//           attachMintingPolicy(mintTicketValidator).
+//           validTo(Date.now()+ toMiliseconds(100)).
+//           complete();
+
+//       const signedTx = await tx.sign().complete();
+//       const txHash = await signedTx.submit();
+//       console.log('Transaction submited:', txHash)
+//     }
+//   }
