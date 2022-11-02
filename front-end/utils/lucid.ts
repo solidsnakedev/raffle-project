@@ -1,8 +1,12 @@
 import { Blockfrost, Lucid, Network } from 'lucid-cardano';
 
+const blockfrostKey = require("../config/blockfrost-key.json")
+
+console.log(blockfrostKey['apikey'])
+
 export const networkParams: {apiUrl: string, apiKey: string, network: Network} = {
     apiUrl: 'https://cardano-preprod.blockfrost.io/api/v0' ,
-    apiKey: 'preprodOr3zZOkFc8Sqa5sp3aa9oGTb1wxulzhy' ,
+    apiKey: blockfrostKey['apikey'] ,
     network: 'Preprod'
 }
 
