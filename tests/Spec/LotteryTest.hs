@@ -86,84 +86,82 @@ import qualified Data.ByteString.Char8 as BS
 ------------------
 import qualified Lottery
 import Lottery (
-    LotteryParam(..) ,
     LotteryDatum(..) ,
-    LotteryRedeemer(..) ,
-    MinHash (..)
+    LotteryRedeemer(..)
     )
 import qualified MintTicket
 
 datum1 = LotteryDatum 
-          { lotteryTicketPrice = 10_000_000
-          , lotteryRandomSeed  = "adadadsds"
-          , lotteryMaxTicket   = 3
-          , lotterySoldTicket  = 0
-          , lotteryMinimumHash =  ""
-          , lotteryTickets     = []
-          , lotteryIntervals   = (90, 100)
+          { ticketPrice = 10_000_000
+          , randomSeed  = "adadadsds"
+          , maxTickets   = 3
+          , soldTickets  = 0
+          , minimumHash =  ""
+          , ticketList     = []
+          , intervals   = (90, 100)
           }
 
 datum2 = LotteryDatum 
-          { lotteryTicketPrice = 10_000_000
-          , lotteryRandomSeed  = "adadadsds"
-          , lotteryMaxTicket   = 3
-          , lotterySoldTicket  = 1
-          , lotteryMinimumHash =  ""
-          , lotteryTickets     = [(TokenName "ticket-1")]
-          , lotteryIntervals   = (90, 100)    
+          { ticketPrice = 10_000_000
+          , randomSeed  = "adadadsds"
+          , maxTickets   = 3
+          , soldTickets  = 1
+          , minimumHash =  ""
+          , ticketList     = [(TokenName "ticket-1")]
+          , intervals   = (90, 100)    
           }
 
 datum3 = LotteryDatum 
-          { lotteryTicketPrice = 10_000_000
-          , lotteryRandomSeed  = "adadadsds"
-          , lotteryMaxTicket   = 3
-          , lotterySoldTicket  = 2
-          , lotteryMinimumHash =  ""
-          , lotteryTickets     = [ (TokenName "ticket-1")
+          { ticketPrice = 10_000_000
+          , randomSeed  = "adadadsds"
+          , maxTickets   = 3
+          , soldTickets  = 2
+          , minimumHash =  ""
+          , ticketList     = [ (TokenName "ticket-1")
                                  , (TokenName "ticket-2")
                                  ]
-          , lotteryIntervals   = (90, 100)
+          , intervals   = (90, 100)
           }
 
 datum4 = LotteryDatum 
-          { lotteryTicketPrice = 10_000_000
-          , lotteryRandomSeed  = "adadadsds"
-          , lotteryMaxTicket   = 3
-          , lotterySoldTicket  = 3
-          , lotteryMinimumHash =  ""
-          , lotteryTickets     = [ (TokenName "ticket-1")
+          { ticketPrice = 10_000_000
+          , randomSeed  = "adadadsds"
+          , maxTickets   = 3
+          , soldTickets  = 3
+          , minimumHash =  ""
+          , ticketList     = [ (TokenName "ticket-1")
                                  , (TokenName "ticket-2")
                                  , (TokenName "ticket-3")
                                  ]
-          , lotteryIntervals   = (90, 100)
+          , intervals   = (90, 100)
           }
 
--- lotteryMinimumHash calculated as follows
+-- minimumHash calculated as follows
 -- sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)
 datum5 = LotteryDatum 
-          { lotteryTicketPrice = 10_000_000
-          , lotteryRandomSeed  = "adadadsds"
-          , lotteryMaxTicket   = 3
-          , lotterySoldTicket  = 3
-          , lotteryMinimumHash = sha2_256 (appendByteString "ticket-1" $ consByteString 3 "adadadsds")
-          , lotteryTickets     = [ (TokenName "ticket-1")
+          { ticketPrice = 10_000_000
+          , randomSeed  = "adadadsds"
+          , maxTickets   = 3
+          , soldTickets  = 3
+          , minimumHash = sha2_256 (appendByteString "ticket-1" $ consByteString 3 "adadadsds")
+          , ticketList     = [ (TokenName "ticket-1")
                                  , (TokenName "ticket-2")
                                  , (TokenName "ticket-3")
                                  ]
-          , lotteryIntervals   = (90, 100)
+          , intervals   = (90, 100)
           }
 
 datum6 = LotteryDatum 
-          { lotteryTicketPrice = 10_000_000
-          , lotteryRandomSeed  = "adadadsds"
-          , lotteryMaxTicket   = 3
-          , lotterySoldTicket  = 3
-          , lotteryMinimumHash = sha2_256 (appendByteString "ticket-2" $ consByteString 3 "adadadsds")
-          , lotteryTickets     = [ (TokenName "ticket-1")
+          { ticketPrice = 10_000_000
+          , randomSeed  = "adadadsds"
+          , maxTickets   = 3
+          , soldTickets  = 3
+          , minimumHash = sha2_256 (appendByteString "ticket-2" $ consByteString 3 "adadadsds")
+          , ticketList     = [ (TokenName "ticket-1")
                                  , (TokenName "ticket-2")
                                  , (TokenName "ticket-3")
                                  ]
-          , lotteryIntervals   = (90, 100)
+          , intervals   = (90, 100)
           }
 
 raffleNFT = singleton (CurrencySymbol "raflle-currency-symbol") (TokenName "raffle") 1

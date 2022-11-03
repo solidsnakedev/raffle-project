@@ -45,7 +45,7 @@ import qualified Ledger.Ada          as Ada
 ------------------
 -- Project dependencies
 ------------------
-import Lottery (LotteryParam(..), LotteryDatum(..), LotteryRedeemer(..), MinHash (..))
+import Lottery (LotteryDatum(..), LotteryRedeemer(..))
 import qualified Lottery
 import qualified MintTicket
 --import BuyTicket (TicketParam(..), TicketDatum(..))
@@ -104,11 +104,11 @@ startRaffle params = do
     let ticketCurSymbol = MintTicket.getCurrencySymbol MintTicket.policy
         lotteryValidatorHash = Lottery.getValidatorHash ticketCurSymbol
         d = LotteryDatum
-                { lotteryTicketPrice = spTicketPrice params
-                , lotteryRandomSeed  = spRandomSeed  params
-                , lotteryMaxTicket   = spMaxTickets  params
-                , lotterySoldTicket  = spSoldTickets params
-                , lotteryMinimumHash = spMinimumHash params
+                { ticketPrice = spTicketPrice params
+                , randomSeed  = spRandomSeed  params
+                , maxTickets   = spMaxTickets  params
+                , soldTickets  = spSoldTickets params
+                , minimumHash = spMinimumHash params
                 }
         v = Ada.toValue minAdaTxOut <> Value.singleton raffleCs raffleTn raffleAmnt
         tx = Constraints.mustPayToOtherScript lotteryValidatorHash (Datum $ PlutusTx.toBuiltinData d) v
@@ -130,7 +130,7 @@ buyTicket params = do
     utxosLotteryScript <- Contract.utxosAt $ Lottery.getScriptAddress ticketCurSymbol
     utxos <- Contract.utxosAt $ bpWalletAddress params
     lotteryDatum <- findLotteryDatum lotteryChainIndexTxOut
-    let lotteryDatum' = lotteryDatum  {lotteryRandomSeed = "test"}
+    let lotteryDatum' = lotteryDatum  {randomSeed = "test"}
     let oref = head $ Map.keys utxos
     let utxoTokenName       = consByteString (txOutRefIdx oref) (getTxId $ txOutRefId oref)
         hashedUtxoTokenName = sha2_256 utxoTokenName
