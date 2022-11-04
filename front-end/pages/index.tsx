@@ -5,7 +5,6 @@ import { useStoreActions, useStoreState } from "../utils/store"
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getAssets } from "../utils/cardano";
-import NftGrid from "../components/NftGrid";
 import initLucid from '../utils/lucid'
 import Raffle from '../components/Raffle'
 
@@ -38,8 +37,6 @@ const Home: NextPage = () => {
       </div>
       <div className="mx-40 my-10">
         <Raffle />
-        <div>Your NFTs:</div>
-        <NftGrid nfts={nftList} />
       </div>
     </div>
   )
