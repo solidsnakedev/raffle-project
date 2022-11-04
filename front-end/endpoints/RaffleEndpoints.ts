@@ -1,7 +1,7 @@
 import { mintTicketValidator, lotteryValidator } from '../utils/validators'
 import {exportedForTesting as helios_internal} from '@hyperionbt/helios'
 import * as helios from '@hyperionbt/helios'
-import { Lucid, TxHash, Lovelace, Constr, SpendingValidator, Data, utf8ToHex, Script, MintingPolicy, Datum, datumJsonToCbor, toHex, sha256, concat, Unit, hexToUtf8 } from 'lucid-cardano'
+import { Lucid, Lovelace, Constr, Data, utf8ToHex, Script, Unit, Assets } from 'lucid-cardano'
 
   /**
     * Convert seconds to miliseconds.
@@ -193,8 +193,11 @@ export const buyTicket = async (lucid : Lucid, rafflePolicy: Script) => {
                 const mintingRedeemer = Data.to(mintingRedeemerData) // TxOutRef to CBOR
                 console.log('mintingRedeemerData(TxOutRef) : ', mintingRedeemerData)
                 // TODO: set a proper ticket price, it's hardcoded for now
-                const lovelace : Lovelace = BigInt(32000000)
+                const newLovelace : Lovelace = BigInt(10000000)
                 console.log('mintingRedeemer(CBOR) : ', mintingRedeemer)
+                const currentLovelace = scriptUtxos[0].assets['lovelace']
+                const newBalance : Assets = { ...scriptUtxos[0].assets, lovelace : currentLovelace + newLovelace}
+                console.log(newBalance)
                 try {
                 // TODO: use txBuilderConfig to calculate minfee manually, remember to convert tx to bytes and apply fee formula with minFeeA and minFeeB
                   const tx = await lucid.newTx()
@@ -202,12 +205,12 @@ export const buyTicket = async (lucid : Lucid, rafflePolicy: Script) => {
                              .attachSpendingValidator(lotteryValidator)
                              .attachMintingPolicy(mintTicketValidator)
                              .mintAssets(assetTicket, mintingRedeemer)
-                             .payToContract(lotteryValidatorAdd, datum,{lovelace, [unitRaffle]: BigInt(1)})
+                             .payToContract(lotteryValidatorAdd, datum, newBalance )
                              .validTo(Date.now() + toMilliseconds(100))
                              .complete()
                   console.log(await lucid.provider.getProtocolParameters())
                   const signedTx = await tx.sign().complete()
-                  const txHash = signedTx.submit()
+                  const txHash = await signedTx.submit()
                   console.log('Transaction submitted:', txHash)
                 } catch (err) {
                   alert(err)
@@ -255,7 +258,7 @@ export const claim = async (lucid : Lucid, rafflePolicy: Script) => {
             lotteryTickets : utxoDatum.fields[5],
             lotteryIntervals : utxoDatum.fields[6]
           }
-          const tokenName = ticketAssets[2].slice(56)
+          const tokenName = ticketAssets[0].slice(56)
           const tokenNameBytes = helios.hexToBytes(tokenName)
           console.log('tokenName(Bytes):', tokenNameBytes)
           //sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)
@@ -286,13 +289,13 @@ export const claim = async (lucid : Lucid, rafflePolicy: Script) => {
           
           try {
             const tx = await lucid.newTx()
-                       .collectFrom([scriptUtxos[0]],validatorRedeemer)
+                       .collectFrom([scriptUtxos[0]].concat(walletUtxos),validatorRedeemer)
                        .attachSpendingValidator(lotteryValidator)
                        .payToContract(lotteryValidatorAdd, datum,scriptUtxos[0].assets)
                        .validTo(Date.now() + toMilliseconds(100))
                        .complete()
             const signedTx = await tx.sign().complete()
-            const txHash = signedTx.submit()
+            const txHash = await signedTx.submit()
             console.log('Transaction submitted:', txHash)
           } catch (err) {
             alert(err)
@@ -300,7 +303,7 @@ export const claim = async (lucid : Lucid, rafflePolicy: Script) => {
 
         }
       } else {
-        alert('no utxos found in loterry validator address : ' + lotteryValidatorAdd)
+        alert('No Raffle NFT found in lottery validator address : ' + lotteryValidatorAdd)
       }
     }
   }
@@ -314,7 +317,7 @@ export const closeRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
       const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
       const scriptUtxos = await lucid.utxosAtWithUnit(lotteryValidatorAdd, unitRaffle);
       const walletUtxos = await lucid.wallet.getUtxos()
-      console.log(walletUtxos)
+      console.log('wallet utxos', walletUtxos)
       const ticketAssets = walletUtxos.map(utxo => (Object.keys(utxo.assets))).flat()
                           .filter(asset => asset.includes(mintTicketPolicyId))
       console.log('tickets found in wallet:', ticketAssets.map(asset =>(asset.slice(56))))
@@ -324,7 +327,7 @@ export const closeRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
         if (scriptUtxos[0].datumHash) {
           const utxoDatum = Data.from (await lucid.datumOf(scriptUtxos[0])) // from CBOR to PlutusData/Json
           console.log('script datum found(LotteryDatum) : ', utxoDatum)
-          const tokenName = ticketAssets[2].slice(56)
+          const tokenName = ticketAssets[0].slice(56)
           const validatorRedeemerData = new Constr (2,[tokenName])
           console.log('validatorRedeemerData(Claim) :', validatorRedeemerData)
           const validatorRedeemer = Data.to(validatorRedeemerData) // Close redeemer
@@ -337,7 +340,7 @@ export const closeRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
                        .validTo(Date.now() + toMilliseconds(1000))
                        .complete()
             const signedTx = await tx.sign().complete()
-            const txHash = signedTx.submit()
+            const txHash = await signedTx.submit()
             console.log('Transaction submitted:', txHash)
           } catch (err) {
             alert(err)
@@ -345,7 +348,7 @@ export const closeRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
 
         }
       } else {
-        alert('no utxos found in lottery validator address : ' + lotteryValidatorAdd)
+        alert('No Raffle NFT found in lottery validator address : ' + lotteryValidatorAdd)
       }
     }
   }
