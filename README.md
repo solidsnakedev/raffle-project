@@ -134,24 +134,24 @@ Any user claim to have the minimum hash without the need to submit another trans
 This method can be divided in 4 Periods
 
 ### 4.1 Start Raffle
-Datum is used as a shared state of the game where :
+Datum schema is used as a shared state of the game where :
 
-- ticket price : the value in ADA the user has to paid to get a ticket
-- random seed : random bytestring used to compute the minimum hash
-- max ticket : maximum amount of ticket to be sold
-- sold ticket : mutable value 
-- minimum hash : value inserted by the user claiming to have the min hash
-- tickets : list of sold tickets 
-- lottery intervals : intervals to delimit buy-claim-close period
+- ticketPrice : the value in ADA the user has to paid to get a ticket
+- randomSeed : random bytestring used to compute the minimum hash
+- maxTickets : maximum amount of ticket to be sold
+- soldTickets : mutable value 
+- minimumHash : value inserted by the user claiming to have the min hash
+- ticketList : list of sold tickets 
+- Intervals : intervals to delimit buy-claim-close period
 
 The raffle initiator commits to:
 
-1. Set the ticket price in Lovelace
-2. Set the maximum amount of tickets to be sold
-3. Set an initial random seed to be used in the minimum hash calculation
-4. Set the minimum hash to be empty
-5. Set ticket list to be empty
-6. Set the intervals for the Buy | Claim | Close period
+1. Set the ticketPrice in Lovelace
+2. Set the maxTickets > 0
+3. Set a randomSeed as arbitrary Bytestring
+4. Set the minimumHash as empty Bytestring
+5. Set ticketList to as empty List
+6. Set both intervals in PosixTime
 
 ### 4.2 Buy Period
 
@@ -161,6 +161,7 @@ Every user commits to :
 2. Use the consumed utxo to generate a unique ticket name
 3. Mint only 1 ticket
 4. Keep the initial raffle settings
+5. increment datum soldTickets by 1
 
 #### Function to mint an unique token name :
 
@@ -172,20 +173,26 @@ sha2_256 (consByteString (txOutRefIdx utxo) ((getTxId . txOutRefId) utxo))
 
 ### 4.3 Claim Period
 
-Once the buy period ends the user can claim to have the minimumhash by using the following parameters:
+Once the buy period ends any user can claim to have the minimumhash by using the following parameters:
 
 1. random seed
 2. sold tickets
 3. ticket name
 
-> Due to the deterministic nature of the eUTxo model, the only value that can not be deterministic is the number of sold tickets.
+> The only value that is not be deterministic is the number of sold tickets.
 
-if an user claims to have the minimum hash value, this one is allow to update the datum field of minimumhash.
-if another user claim to have the minimum hash of the previous user, this one can update the datum field of minimumhash.
+if an user claims to have the minimum hash value, this one is allowed to update the datum field of minimumhash.
+if another user claim to have a lower minimum hash value than the previous user, this one can update the datum field of minimumhash.
 
 ### 4.4 Close Period
 
 Just the user holding the token that computes the minimum hash can consumed the funds from the script
+
+requirements:
+
+1. Hold the ticket that computes the minimum hash
+2. Claim period already ended
+
 
 ## 5. Compile Code
 
