@@ -11,6 +11,7 @@ const WalletConnect = () => {
     const setAvailableWallets = useStoreActions(actions => actions.setAvailableWallets)
     
     const [connectedAddress, setConnectedAddress] = useState("")
+    const [mounted, setMounted] = useState(false);
     
     const loadWalletSession = async () => {
         if (walletStore.connected &&
@@ -45,6 +46,7 @@ const WalletConnect = () => {
             if (window.cardano.eternl) wallets.push('Eternl')
             if (window.cardano.flint) wallets.push('Flint')
             loadWalletSession()
+            setMounted(true)
         }
         setAvailableWallets(wallets)
     }, [])
