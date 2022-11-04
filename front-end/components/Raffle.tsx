@@ -24,8 +24,9 @@ const Raffle: NextPage = () => {
 
   useEffect(() => {
     if (lucid) {
-      getAssets(lucid)
+      
       initRafflePolicy(lucid)
+      getAssets(lucid)
     } else {
       initLucid(walletStore.name).then((Lucid: Lucid) => { setLucid(Lucid) })
     }
@@ -61,13 +62,24 @@ const Raffle: NextPage = () => {
     return (
       <div className="px-10">
         <div className="mx-40 my-10">
-          <button className="btn btn-secondary m-5" onClick={() => { mintRaffle(lucid, rafflePolicy) }}>Mint Raffle</button>
-          <button className="btn btn-secondary m-5" onClick={() => { burnRaffle(lucid, rafflePolicy) }}>Burn Raffle</button>
-          <button className="btn btn-secondary m-5" onClick={() => { startRaffle(lucid, rafflePolicy) }}>Start Raffle</button>
-          <button className="btn btn-secondary m-5" onClick={() => { buyTicket(lucid, rafflePolicy) }}>Buy Ticket</button>
-          <button className="btn btn-secondary m-5" onClick={() => { claim(lucid, rafflePolicy) }}>Claim</button>
-          <button className="btn btn-secondary m-5" onClick={() => { closeRaffle(lucid, rafflePolicy) }}>Close</button>
-          <button className="btn btn-secondary m-5" onClick={() => { testEndpoint(lucid) }}>Test Endpoint</button>
+          
+          <div>
+          <button className="btn btn-success m-5" onClick={() => { mintRaffle(lucid, rafflePolicy) }}>Mint Raffle</button>
+          </div>
+
+          <div>
+            <button className="btn btn-success m-5" onClick={() => { startRaffle(lucid, rafflePolicy) }}>Start Raffle</button>
+          </div>
+
+          <div>
+          <button className="btn btn-success m-5" onClick={() => { buyTicket(lucid, rafflePolicy) }}>Buy Ticket</button>
+          <button className="btn btn-success m-5" onClick={() => { claim(lucid, rafflePolicy) }}>Claim</button>
+          <button className="btn btn-success m-5" onClick={() => { closeRaffle(lucid, rafflePolicy) }}>Close</button>
+          </div>
+
+          <button className="btn btn-error m-5" onClick={() => { burnRaffle(lucid, rafflePolicy) }}>Burn Raffle</button>
+          <button className="btn btn-error m-5" onClick={() => { testEndpoint(lucid) }}>Test Endpoint</button>
+
         </div>
         <TicketGrid assets={ticketAssets} />
       </div>
