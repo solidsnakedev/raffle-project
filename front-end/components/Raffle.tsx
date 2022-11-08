@@ -2,19 +2,21 @@ import type { NextPage } from 'next'
 import { useStoreActions, useStoreState } from "../utils/store"
 import { useState, useEffect } from 'react'
 import initLucid from '../utils/lucid'
-import { Lucid, Script} from 'lucid-cardano'
+import { Lucid, Script } from 'lucid-cardano'
 import { burnRaffle, buyTicket, claim, closeRaffle, mintRaffle, startRaffle, testEndpoint } from '../endpoints/RaffleEndpoints'
 import { mintTicketValidator } from '../utils/validators'
 import TicketGrid from './TicketGrid'
+import WalletConnect from './WalletConnect'
 
 const Raffle: NextPage = () => {
   const walletStore = useStoreState((state: any) => state.wallet)
+
   //const [nftList, setNftList] = useState([])
   const [lucid, setLucid] = useState<Lucid>()
   // const [script, setScript] = useState<SpendingValidator>()
   // const [scriptAddress, setScriptAddress] = useState("")
   const [rafflePolicyId, setRafflePolicyId] = useState("")
-  const [rafflePolicy, setRafflePolicy]= useState<Script>({type: "Native", script:""})
+  const [rafflePolicy, setRafflePolicy] = useState<Script>({ type: "Native", script: "" })
   // const [ticketPrice, setTicketPrice] = useState(10000000)
   // const [randomSeed, setRandomSeed ] = useState("adadadsds")
   // const [maxTicket, setMaxTicket] = useState(3)
@@ -24,7 +26,6 @@ const Raffle: NextPage = () => {
 
   useEffect(() => {
     if (lucid) {
-      
       initRafflePolicy(lucid)
       getAssets(lucid)
     } else {
@@ -32,15 +33,16 @@ const Raffle: NextPage = () => {
     }
   }, [lucid])
 
+
   /**
   * One shot function to Initialize raffle policy.
   */
-  const initRafflePolicy = async (lucid : Lucid) => {
-    const {paymentCredential} = lucid.utils.getAddressDetails(await lucid.wallet.address());
+  const initRafflePolicy = async (lucid: Lucid) => {
+    const { paymentCredential } = lucid.utils.getAddressDetails(await lucid.wallet.address());
     const mintingPolicy = lucid.utils.nativeScriptFromJson(
       {
-          type: "sig",
-          keyHash: paymentCredential?.hash
+        type: "sig",
+        keyHash: paymentCredential?.hash
       }
     )
     console.log('minting policy : ', mintingPolicy)
@@ -49,48 +51,48 @@ const Raffle: NextPage = () => {
     setRafflePolicy(mintingPolicy)
   }
 
-  const getAssets = async (lucid : Lucid) =>{
+  const getAssets = async (lucid: Lucid) => {
     const mintTicketPolicyId = lucid.utils.mintingPolicyToId(mintTicketValidator)
     const walletUtxos = await lucid.wallet.getUtxos()
     const ticketAssets = walletUtxos.map(utxo => (Object.keys(utxo.assets))).flat()
-                        .filter(asset => asset.includes(mintTicketPolicyId))
+      .filter(asset => asset.includes(mintTicketPolicyId))
     console.log(ticketAssets)
     setTicketAssets(ticketAssets)
   }
 
-  if (lucid){
-    return (
-      <div className="px-10">
-        <div className="mx-40 my-10">
-          
-          <div>
-          <button className="btn btn-success m-5" onClick={() => { mintRaffle(lucid, rafflePolicy) }}>Mint Raffle</button>
-          </div>
+  if (!lucid) {
+    return null
+  }
 
-          <div>
-            <button className="btn btn-success m-5" onClick={() => { startRaffle(lucid, rafflePolicy) }}>Start Raffle</button>
-          </div>
-
-          <div>
-          <button className="btn btn-success m-5" onClick={() => { buyTicket(lucid, rafflePolicy) }}>Buy Ticket</button>
-          <button className="btn btn-success m-5" onClick={() => { claim(lucid, rafflePolicy) }}>Claim</button>
-          <button className="btn btn-success m-5" onClick={() => { closeRaffle(lucid, rafflePolicy) }}>Close</button>
-          </div>
-
-          <button className="btn btn-error m-5" onClick={() => { burnRaffle(lucid, rafflePolicy) }}>Burn Raffle</button>
-          <button className="btn btn-error m-5" onClick={() => { testEndpoint(lucid) }}>Test Endpoint</button>
-
+  return (
+    <div className="px-100">
+      <div className='flex flex-row justify-evenly'>
+        <div className='flex justify-start flex-col'>
+          <button className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { mintRaffle(lucid, rafflePolicy) }}>Mint Raffle</button>
         </div>
+        <div className='flex justify-start flex-col'>
+          <button className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { startRaffle(lucid, rafflePolicy) }}>Start Raffle</button>
+          <input type="text" placeholder="Type here" className="input input-bordered input-primary w-full m-5" />
+          <input type="text" placeholder="Type here" className="input input-bordered input-primary w-full m-5" />
+          <input type="text" placeholder="Type here" className="input input-bordered input-primary w-full m-5" />
+          <input type="text" placeholder="Type here" className="input input-bordered input-primary w-full m-5" />
+        </div>
+        <div className='flex justify-start flex-col'>
+          <button className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { buyTicket(lucid, rafflePolicy) }}>Buy Ticket</button>
+          <button className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { claim(lucid, rafflePolicy) }}>Claim</button>
+          <button className="btn btn-outline btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { closeRaffle(lucid, rafflePolicy) }}>Close</button>
+        </div>
+        <div className='flex justify-start flex-col'>
+          <button className="btn btn-outline btn-accent btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { burnRaffle(lucid, rafflePolicy) }}>Burn Raffle</button>
+          <button className="btn btn-outline btn-accent btn-xs sm:btn-sm md:btn-md lg:btn-lg m-5" onClick={() => { testEndpoint(lucid) }}>Test Endpoint</button>
+        </div>
+      </div>
+      <div>
         <TicketGrid assets={ticketAssets} />
       </div>
-    )
-  }
-  else {
-    return(
-      <div>
-      </div>
-    )
-  }
+
+    </div>
+  )
 }
 
 export default Raffle
