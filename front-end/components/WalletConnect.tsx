@@ -9,16 +9,16 @@ const WalletConnect = () => {
     const setWallet = useStoreActions(actions => actions.setWallet)
     const availableWallets = useStoreState(state => state.availableWallets)
     const setAvailableWallets = useStoreActions(actions => actions.setAvailableWallets)
-    
+
     const [connectedAddress, setConnectedAddress] = useState("")
     const [mounted, setMounted] = useState(false);
-    
+
     const loadWalletSession = async () => {
-        const isWalletEnabled  = await window.cardano[walletStore.name.toLowerCase()]?.isEnabled() ?? false
+        const isWalletEnabled = await window.cardano[walletStore.name.toLowerCase()]?.isEnabled() ?? false
         if (!isWalletEnabled) {
             const walletStoreObj = { connected: false, name: '', address: '' }
             setWallet(walletStoreObj)
-        }else {
+        } else {
 
             walletConnected(walletStore.name)
         }
@@ -51,10 +51,10 @@ const WalletConnect = () => {
 
     useEffect(() => {
         if (window.cardano) {
-            const walletList = Object.keys(window.cardano).filter((walletName)=>
-            window.cardano[walletName].icon &&
-            walletName !== "ccvault" &&
-            walletName !== "typhon"
+            const walletList = Object.keys(window.cardano).filter((walletName) =>
+                window.cardano[walletName].icon &&
+                walletName !== "ccvault" &&
+                walletName !== "typhon"
             )
             setAvailableWallets(walletList)
             loadWalletSession()
@@ -67,11 +67,11 @@ const WalletConnect = () => {
             <div className="dropdown dropdown-end">
                 <label tabIndex={0} className="btn m-1">{connectedAddress != "" ? 'Connected' : 'Connect'}</label>
                 <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-300 rounded-box w-52">
-                {availableWallets.map((wallet) =>
+                    {availableWallets.map((wallet) =>
                         <li key={wallet} onClick={() => { selectWallet(wallet) }} >
                             <div className="flex flex-row justify-evenly">
                                 <div className="basis-8">
-                                <img src={window.cardano[wallet].icon} />
+                                    <img src={window.cardano[wallet].icon} />
                                 </div>
                                 <div className="basis-1"> {wallet.charAt(0).toUpperCase() + wallet.slice(1)}</div>
                             </div>
