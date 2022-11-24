@@ -14,18 +14,27 @@ const WalletConnect = () => {
     const [mounted, setMounted] = useState(false);
     
     const loadWalletSession = async () => {
-        if (walletStore.connected &&
-            walletStore.name &&
-            window.cardano &&
-            (await window.cardano[walletStore.name.toLowerCase()].enable())
-        ) {
+        const isWalletEnabled  = await window.cardano[walletStore.name.toLowerCase()]?.isEnabled() ?? false
+        if (!isWalletEnabled) {
+            const walletStoreObj = { connected: false, name: '', address: '' }
+            setWallet(walletStoreObj)
+        }else {
+
             walletConnected(walletStore.name)
         }
+        // if (walletStore.connected &&
+        //     walletStore.name &&
+        //     window.cardano &&
+        //     (await window.cardano[walletStore.name.toLowerCase()].enable())
+        // ) {
+        //     walletConnected(walletStore.name)
+        // }
     }
 
-    const walletConnected = async (wallet: string, connect: boolean = true) => {
-        const addr = connect ? await (await initLucid(wallet)).wallet.address() : ''
-        const walletStoreObj = connect ? { connected: true, name: wallet, address: addr } : { connected: false, name: '', address: '' }
+    const walletConnected = async (wallet: string) => {
+        console.log('walletConnected')
+        const addr = await (await initLucid(wallet)).wallet.address()
+        const walletStoreObj = { connected: true, name: wallet, address: addr }
         setConnectedAddress(addr)
         setWallet(walletStoreObj)
     }
@@ -35,20 +44,22 @@ const WalletConnect = () => {
             window.cardano &&
             (await window.cardano[wallet.toLocaleLowerCase()].enable())
         ) {
-            walletConnected(wallet)
+            await walletConnected(wallet)
+            window.location.reload()
         }
     }
 
     useEffect(() => {
-        let wallets = []
         if (window.cardano) {
-            if (window.cardano.nami) wallets.push('Nami')
-            if (window.cardano.eternl) wallets.push('Eternl')
-            if (window.cardano.flint) wallets.push('Flint')
+            const walletList = Object.keys(window.cardano).filter((walletName)=>
+            window.cardano[walletName].icon &&
+            walletName !== "ccvault" &&
+            walletName !== "typhon"
+            )
+            setAvailableWallets(walletList)
             loadWalletSession()
             setMounted(true)
         }
-        setAvailableWallets(wallets)
     }, [])
 
     return (
@@ -56,8 +67,17 @@ const WalletConnect = () => {
             <div className="dropdown dropdown-end">
                 <label tabIndex={0} className="btn m-1">{connectedAddress != "" ? 'Connected' : 'Connect'}</label>
                 <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-300 rounded-box w-52">
-                    {availableWallets.map((wallet) =>
-                        <li key={wallet} onClick={() => { selectWallet(wallet) }} ><a>{wallet}</a>
+                {availableWallets.map((wallet) =>
+                        <li key={wallet} onClick={() => { selectWallet(wallet) }} >
+                            <div className="flex flex-row justify-evenly">
+                                <div className="basis-8">
+                                <img src={window.cardano[wallet].icon} />
+                                </div>
+                                <div className="basis-1"> {wallet.charAt(0).toUpperCase() + wallet.slice(1)}</div>
+                            </div>
+                            {/* <a >
+                                {wallet}
+                                </a> */}
                         </li>
                     )}
                 </ul>
