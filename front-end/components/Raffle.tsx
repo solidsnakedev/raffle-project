@@ -23,15 +23,27 @@ const Raffle: NextPage = () => {
   // const [minimumHash, setMinimumHash] = useState("")
   // const [tickets, setTickets] = useState([])
   const [ticketAssets, setTicketAssets] = useState<String[]>([])
+  const [isWalletEnabled, setIsWalletEnabled] = useState(false)
 
-  useEffect(() => {
-    if (lucid) {
-      initRafflePolicy(lucid)
-      getAssets(lucid)
-    } else {
-      initLucid(walletStore.name).then((Lucid: Lucid) => { setLucid(Lucid) })
+  const checkWalletStatus = async () => {
+    if (await window.cardano[walletStore.name.toLowerCase()]?.isEnabled()){
+      setIsWalletEnabled(true)
+    }else{
+      setIsWalletEnabled(false)
     }
-  }, [lucid])
+  }
+  useEffect(() => {
+    console.log(isWalletEnabled)
+    checkWalletStatus()
+    if (isWalletEnabled && !lucid) {
+      initLucid(walletStore.name).then((Lucid: Lucid) => { setLucid(Lucid) })
+    } 
+    if(lucid){
+      getAssets(lucid)
+      initRafflePolicy(lucid)
+    }
+    
+  }, [lucid, isWalletEnabled])
 
 
   /**
