@@ -105,11 +105,10 @@ library
   
   exposed-modules:
       Utils
+    , Lottery
+    , LotteryEmulator
     , MintTicket
     , MintTicketEmulator
-    , BuyTicket
-    , BuyTicketEmulator
-    , Lottery
     , MintRaffle
     , MintRaffleEmulator
 

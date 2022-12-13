@@ -374,8 +374,8 @@ context4 =
         txInfoOutputWallet = 
             TxOut   { txOutAddress = Address { addressCredential = PubKeyCredential "a2c20c77887ace1cd986193e4e75babd8993cfd56995cd5cfce609c2", addressStakingCredential = Nothing }
                     , txOutValue = singleton adaSymbol adaToken 90_000_000 <>
-                                   singleton (CurrencySymbol "ticket-currency-symbol") (TokenName "ticket-1") 1 <>
-                                    singleton (CurrencySymbol "ticket-currency-symbol") (TokenName "ticket-2") 1
+                                   singleton (CurrencySymbol "ticket-currency-symbol") (TokenName "ticket-1") 1  <>
+                                   singleton (CurrencySymbol "ticket-currency-symbol") (TokenName "ticket-2") 1
                     , txOutDatumHash = Nothing
                     }
         txInfoOutputScript = 

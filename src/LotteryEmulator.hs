@@ -1,6 +1,6 @@
 {-# LANGUAGE NumericUnderscores  #-}
 
-module BuyTicketEmulator where
+module LotteryEmulator where
 
 ------------------
 -- Non Plutus dependencies

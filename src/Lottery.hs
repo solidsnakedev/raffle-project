@@ -93,6 +93,26 @@ PlutusTx.unstableMakeIsData ''LotteryRedeemer
 info :: ScriptContext -> TxInfo
 info = scriptContextTxInfo
 
+{-# INLINABLE checkDatumBuy #-}
+checkDatumBuy :: LotteryDatum -> LotteryDatum -> Bool
+checkDatumBuy old new = 
+    ticketPrice old     == ticketPrice new &&
+    randomSeed  old     == randomSeed  new &&
+    maxTickets  old     == maxTickets  new &&
+    soldTickets old + 1 == soldTickets new &&
+    minimumHash old     == minimumHash new &&
+    intervals   old     == intervals   new
+
+-- Checks everything except the minimumHash
+{-# INLINABLE checkDatumClaim #-}
+checkDatumClaim :: LotteryDatum -> LotteryDatum -> Bool
+checkDatumClaim old new =
+    ticketPrice old     == ticketPrice new &&
+    randomSeed  old     == randomSeed  new &&
+    maxTickets  old     == maxTickets  new &&
+    soldTickets old     == soldTickets new &&
+    intervals   old     == intervals   new
+
 
 -- TODO: Consider convert code to Plutarch
 {-# INLINABLE mkLotteryValidator #-}
@@ -100,28 +120,16 @@ mkLotteryValidator :: CurrencySymbol -> LotteryDatum -> LotteryRedeemer -> Scrip
 mkLotteryValidator csMintTicket dat red ctx =
     case red of
         Buy ->
-            traceIfFalse "Ticket price can not be changed" (ticketPrice dat == ticketPrice outputDatum) &&
-            traceIfFalse "Random seed can not be changed" (randomSeed dat  == randomSeed outputDatum) &&
-            traceIfFalse "Max Ticket can not be changed" (maxTickets dat == maxTickets outputDatum) &&
-            traceIfFalse "Sold tickets should increased by 1" (soldTickets dat + 1 == soldTickets outputDatum) &&
-            traceIfFalse "Min Hash can not be changed" (minimumHash dat == minimumHash outputDatum) &&
-            traceIfFalse "Lottery Intervals can not be changed" (intervals dat == intervals outputDatum) &&
+            checkDatumBuy dat outputDatum &&
             traceIfFalse "Lottery List is empty" isLotteryListEmpty &&
             traceIfFalse "Token name is not in Lottery List" isTokenInLotteryList &&
             traceIfFalse "Previous Tokens not included in Lottery List" hasPreviousTokens &&
             traceIfFalse "Need to pay Ticket Price to Contract" isPayToScript &&
-            -- traceIfFalse "Only one user Utxo is allowed" isOneUser &&
-            -- traceIfFalse "Only one script Utxo is allowed" isOneScript &&
             traceIfFalse "Can not Buy more tickets" (soldTickets outputDatum <= maxTickets dat) -- &&
             --traceIfFalse "Buy dead line reached" isBuyPeriod
 
         Claim tokenNameRedeemer ->
-            traceIfFalse "Ticket price can not be changed" (ticketPrice dat == ticketPrice outputDatum) &&
-            traceIfFalse "Random seed can not be changed" (randomSeed dat  == randomSeed outputDatum) &&
-            traceIfFalse "Max Ticket can not be changed" (maxTickets dat == maxTickets outputDatum) &&
-            traceIfFalse "Sold tickets can not be changed" (soldTickets dat  == soldTickets outputDatum) &&
-            traceIfFalse "Lottery List can not be changed" (ticketList dat == ticketList outputDatum) &&
-            traceIfFalse "Lottery Intervals can not be changed" (intervals dat == intervals outputDatum) &&
+            checkDatumClaim dat outputDatum  &&
             traceIfFalse "Token was not purchased in Buy State" (isTokenPurchased tokenNameRedeemer) &&
             traceIfFalse "Invalid Minimum Hash" (validateMinHash tokenNameRedeemer)&&
             traceIfFalse "Result is not minimum than previous Hash" isMinHash &&
@@ -190,12 +198,6 @@ mkLotteryValidator csMintTicket dat red ctx =
                 raffleNFTOutput = noAdaValue $ txOutValue ownOutput
 
                 valueLength = length $ symbols $ txOutValue ownOutput
-
-        isOneUser :: Bool
-        isOneUser = (length $ filter isJust $ pubKeyOutput . txInInfoResolved <$> (txInfoInputs $ txInfo')) == 1
-
-        isOneScript :: Bool
-        isOneScript = (length $ filter isJust $ toValidatorHash . txOutAddress . txInInfoResolved <$> (txInfoInputs $ txInfo')) == 1
 
         isTokenPurchased :: TokenName -> Bool
         isTokenPurchased tokenNameRedeemer = (findSpentTicket tokenNameRedeemer) `elem` ticketList outputDatum
