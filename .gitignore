@@ -1,4 +1,5 @@
 dist-newstyle
+plutus-scripts
 front-end/cardano-dapp-quickstart
 front-end/node_modules
 front-end/.next
