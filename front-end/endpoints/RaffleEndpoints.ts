@@ -13,7 +13,7 @@ const toMilliseconds = (seconds : number) => {
 
 export const testEndpoint = async (lucid: Lucid ): Promise<void> => {
     if (lucid) {
-
+      console.log(await lucid.provider.getProtocolParameters())
       console.log(helios.bytesToHex(helios_internal.Crypto.sha2_256(helios_internal.stringToBytes("asda"))))
 
       console.log(lucid.utils.unixTimeToSlot(Date.now() + 1000000))
@@ -66,7 +66,7 @@ export const burnRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
     }
   }
 
-export const startRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
+  export const startRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
     if (lucid) {
         console.log("starting raffle")
         const rafflePolicyId = lucid.utils.mintingPolicyToId(rafflePolicy);
@@ -74,28 +74,28 @@ export const startRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
         const lotteryValidatorAdd = lucid.utils.validatorToAddress(lotteryValidator)
         console.log('lottery validator address : ', lotteryValidatorAdd)
         console.log('mint ticket validator address : ', lucid.utils.validatorToAddress(mintTicketValidator))
-        const lotteryTicketPrice = 10000000;
-        const lotteryRandomSeed = "adadadsds"
-        const lotteryMaxTicket = 3;
-        const lotterySoldTicket = 0
-        const lotteryMinimumHash = "";
-        const lotteryTickets :string[] = [];
+        const ticketPrice = 10000000;
+        const randomSeed = "adadadsds"
+        const maxTickets = 3;
+        const soldTickets = 0
+        const minimumHash = "";
+        const ticketList :string[] = [];
         // [buy period] | [claim period] | [close period]
         // ------------ 2 -------------- 4 --------------
-        const lotteryIntervals = new Constr (0,[
+        const intervals = new Constr (0,[
             BigInt(Date.now()+ toMilliseconds(600)), // 10 minutes
             BigInt(Date.now()+ toMilliseconds(1200)) //  20 minutes
         ])
         
         const lotteryDatum =
         new Constr (0, [
-            BigInt(lotteryTicketPrice),
-            utf8ToHex(lotteryRandomSeed),
-            BigInt(lotteryMaxTicket),
-            BigInt(lotterySoldTicket),
-            utf8ToHex(lotteryMinimumHash),
-            lotteryTickets,
-            lotteryIntervals
+            BigInt(ticketPrice),
+            utf8ToHex(randomSeed),
+            BigInt(maxTickets),
+            BigInt(soldTickets),
+            utf8ToHex(minimumHash),
+            ticketList,
+            intervals
         ])
         console.log('lottery datum (PlutusData) : ', lotteryDatum)
 
@@ -104,24 +104,23 @@ export const startRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
         
         //console.log(lucid.utils.unixTimeToSlot(Date.now()))
         const unit : Unit = rafflePolicyId + utf8ToHex ("RaffleNFT #1")
-        const utxos = await lucid.utxosAtWithUnit(await lucid.wallet.address(), unit)
+        const asset = {[unit]: BigInt(1)}
 
-        if (utxos.length > 0) {
-            const tx = await
-                lucid.newTx().
-                payToContract(lotteryValidatorAdd, datum, {[unit]: BigInt(1)}).
-                complete()
-        
-            const signedTx = await
-                tx.sign().
-                complete()
-        
-            const txHash = signedTx.submit()
-            console.log('Transaction submitted:', txHash)
+        const tx = await
+            lucid.newTx().
+            mintAssets(asset).
+            validTo(Date.now()+ toMilliseconds(100)).
+            attachMintingPolicy(rafflePolicy).
+            payToContract(lotteryValidatorAdd, datum, {[unit]: BigInt(1)}).
+            complete()
+    
+        const signedTx = await
+            tx.sign().
+            complete()
+    
+        const txHash = signedTx.submit()
+        console.log('Transaction submitted:', txHash)
 
-        } else {
-            alert('Raffle not found in wallet address')
-        }
 
     }
   }
@@ -161,23 +160,23 @@ export const buyTicket = async (lucid : Lucid, rafflePolicy: Script) => {
                 const utxoDatum = Data.from (await lucid.datumOf(scriptUtxos[0])) // from CBOR to PlutusData/Json
                 console.log('script datum found(LotteryDatum) : ', utxoDatum)
                 const newDatum = {
-                    lotteryTicketPrice : utxoDatum.fields[0],
-                    lotteryRandomSeed : utxoDatum.fields[1],
-                    lotteryMaxTicket : utxoDatum.fields[2],
-                    lotterySoldTicket : utxoDatum.fields[3],
-                    lotteryMinimumHash : utxoDatum.fields[4],
-                    lotteryTickets : utxoDatum.fields[5],
-                    lotteryIntervals : utxoDatum.fields[6]
+                    ticketPrice : utxoDatum.fields[0],
+                    randomSeed : utxoDatum.fields[1],
+                    maxTickets : utxoDatum.fields[2],
+                    soldTickets : utxoDatum.fields[3],
+                    minimumHash : utxoDatum.fields[4],
+                    ticketList : utxoDatum.fields[5],
+                    intervals : utxoDatum.fields[6]
                 }
                 const newLotteryDatum = new
                     Constr (0, [
-                        newDatum.lotteryTicketPrice,
-                        newDatum.lotteryRandomSeed,
-                        newDatum.lotteryMaxTicket,
-                        newDatum.lotterySoldTicket + BigInt(1),
-                        newDatum.lotteryMinimumHash,
-                        newDatum.lotteryTickets.concat(hashedTokenName),
-                        newDatum.lotteryIntervals
+                        newDatum.ticketPrice,
+                        newDatum.randomSeed,
+                        newDatum.maxTickets,
+                        newDatum.soldTickets + BigInt(1),
+                        newDatum.minimumHash,
+                        newDatum.ticketList.concat(hashedTokenName),
+                        newDatum.intervals
                     ])
                 console.log('new script datum(LotteryDatum): ', newLotteryDatum)
                 const datum = Data.to(newLotteryDatum)
@@ -250,19 +249,19 @@ export const claim = async (lucid : Lucid, rafflePolicy: Script) => {
           const utxoDatum = Data.from (await lucid.datumOf(scriptUtxos[0])) // from CBOR to PlutusData/Json
           console.log('script datum found(LotteryDatum) : ', utxoDatum)
           const newDatum = {
-            lotteryTicketPrice : utxoDatum.fields[0],
-            lotteryRandomSeed : utxoDatum.fields[1],
-            lotteryMaxTicket : utxoDatum.fields[2],
-            lotterySoldTicket : utxoDatum.fields[3],
-            lotteryMinimumHash : utxoDatum.fields[4],
-            lotteryTickets : utxoDatum.fields[5],
-            lotteryIntervals : utxoDatum.fields[6]
+            ticketPrice : utxoDatum.fields[0],
+            randomSeed : utxoDatum.fields[1],
+            maxTickets : utxoDatum.fields[2],
+            soldTickets : utxoDatum.fields[3],
+            minimumHash : utxoDatum.fields[4],
+            ticketList : utxoDatum.fields[5],
+            intervals : utxoDatum.fields[6]
           }
-          const tokenName = ticketAssets[0].slice(56)
+          const tokenName = ticketAssets[2].slice(56)
           const tokenNameBytes = helios.hexToBytes(tokenName)
           console.log('tokenName(Bytes):', tokenNameBytes)
           //sha2_256 (appendByteString ticketName $ consByteString soldTickets raffleSeed)
-          const pseudoRandomNumber = [Number(newDatum.lotterySoldTicket)].concat(helios.hexToBytes(newDatum.lotteryRandomSeed))
+          const pseudoRandomNumber = [Number(newDatum.soldTickets)].concat(helios.hexToBytes(newDatum.randomSeed))
           console.log('Pseudo Random number(Bytes) :',pseudoRandomNumber)
           const claimMinimumHashBytes = helios_internal.Crypto.sha2_256(tokenNameBytes.concat(pseudoRandomNumber))
           console.log('claimMinimumHashBytes(Bytes):', claimMinimumHashBytes)
@@ -271,13 +270,13 @@ export const claim = async (lucid : Lucid, rafflePolicy: Script) => {
 
           const newLotteryDatum = new
                     Constr (0, [
-                        newDatum.lotteryTicketPrice,
-                        newDatum.lotteryRandomSeed,
-                        newDatum.lotteryMaxTicket,
-                        newDatum.lotterySoldTicket,
+                        newDatum.ticketPrice,
+                        newDatum.randomSeed,
+                        newDatum.maxTickets,
+                        newDatum.soldTickets,
                         claimMinimumHash,
-                        newDatum.lotteryTickets,
-                        newDatum.lotteryIntervals
+                        newDatum.ticketList,
+                        newDatum.intervals
                     ])
           console.log('new script datum(LotteryDatum): ', newLotteryDatum)
           const datum = Data.to(newLotteryDatum)
@@ -327,7 +326,7 @@ export const closeRaffle = async (lucid : Lucid, rafflePolicy: Script) => {
         if (scriptUtxos[0].datumHash) {
           const utxoDatum = Data.from (await lucid.datumOf(scriptUtxos[0])) // from CBOR to PlutusData/Json
           console.log('script datum found(LotteryDatum) : ', utxoDatum)
-          const tokenName = ticketAssets[0].slice(56)
+          const tokenName = ticketAssets[2].slice(56)
           const validatorRedeemerData = new Constr (2,[tokenName])
           console.log('validatorRedeemerData(Claim) :', validatorRedeemerData)
           const validatorRedeemer = Data.to(validatorRedeemerData) // Close redeemer

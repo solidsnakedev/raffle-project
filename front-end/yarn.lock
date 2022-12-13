@@ -1777,13 +1777,14 @@
   dependencies:
     "yallist" "^4.0.0"
 
-"lucid-cardano@^0.6.8":
-  "integrity" "sha512-7m5qSH6lEEPofvynNQTpZgojJOeC4hBHSBvBLEji0RNXVWVbeg99dl7zMrS+HudiMYE0t8rgQ8Vnod7941zbTA=="
-  "resolved" "https://registry.npmjs.org/lucid-cardano/-/lucid-cardano-0.6.8.tgz"
-  "version" "0.6.8"
+"lucid-cardano@^0.7.9":
+  "integrity" "sha512-GQAu6qfuICPQGxcO9aHCZ4J51R/VvwsVCrQxK8nsiKJ0Z/w6ZTyNQ45OObXk3EX2znjdjOliCfseh9/Pwwl7gg=="
+  "resolved" "https://registry.npmjs.org/lucid-cardano/-/lucid-cardano-0.7.9.tgz"
+  "version" "0.7.9"
   dependencies:
     "@peculiar/webcrypto" "^1.4.0"
     "node-fetch" "^3.2.3"
+    "ws" "^8.10.0"
 
 "merge2@^1.3.0", "merge2@^1.4.1":
   "integrity" "sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg=="
@@ -2559,6 +2560,11 @@
   "integrity" "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="
   "resolved" "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz"
   "version" "1.0.2"
+
+"ws@^8.10.0":
+  "integrity" "sha512-HPG3wQd9sNQoT9xHyNCXoDUa+Xw/VevmY9FoHyQ+g+rrMn4j6FB4np7Z0OhdTgjx6MgQLK7jwSy1YecU1+4Asg=="
+  "resolved" "https://registry.npmjs.org/ws/-/ws-8.11.0.tgz"
+  "version" "8.11.0"
 
 "xtend@^4.0.2":
   "integrity" "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="

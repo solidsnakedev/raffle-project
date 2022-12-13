@@ -14,25 +14,12 @@ const WalletConnect = () => {
     const [mounted, setMounted] = useState(false);
 
     const loadWalletSession = async () => {
-        const isWalletEnabled = await window.cardano[walletStore.name.toLowerCase()]?.isEnabled() ?? false
-        if (!isWalletEnabled) {
-            const walletStoreObj = { connected: false, name: '', address: '' }
-            setWallet(walletStoreObj)
-        } else {
-
-            walletConnected(walletStore.name)
-        }
-        // if (walletStore.connected &&
-        //     walletStore.name &&
-        //     window.cardano &&
-        //     (await window.cardano[walletStore.name.toLowerCase()].enable())
-        // ) {
-        //     walletConnected(walletStore.name)
-        // }
+        const result = await window.cardano[walletStore.name.toLowerCase()]?.isEnabled()
+        result ? walletConnected(walletStore.name) : setWallet({ connected: false, name: '', address: '' })
     }
 
     const walletConnected = async (wallet: string) => {
-        console.log('walletConnected')
+        console.log('WalletConnect.tsx -> walletConnected')
         const addr = await (await initLucid(wallet)).wallet.address()
         const walletStoreObj = { connected: true, name: wallet, address: addr }
         setConnectedAddress(addr)
@@ -45,7 +32,7 @@ const WalletConnect = () => {
             (await window.cardano[wallet.toLocaleLowerCase()].enable())
         ) {
             await walletConnected(wallet)
-            window.location.reload()
+            // window.location.reload()
         }
     }
 
@@ -62,7 +49,7 @@ const WalletConnect = () => {
         }
     }, [])
 
-    return (
+    return mounted ? (
         <>
             <div className="dropdown dropdown-end">
                 <label tabIndex={0} className="btn m-1">{connectedAddress != "" ? 'Connected' : 'Connect'}</label>
@@ -83,7 +70,7 @@ const WalletConnect = () => {
                 </ul>
             </div>
         </>
-    )
+    ) : null
 }
 
 export default WalletConnect;

@@ -1,24 +1,10 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import WalletConnect from '../components/WalletConnect'
-import { useStoreActions, useStoreState } from "../utils/store"
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { getAssets } from "../utils/cardano";
-import initLucid from '../utils/lucid'
 import Raffle from '../components/Raffle'
 
 const Home: NextPage = () => {
-  const walletStore = useStoreState((state: any) => state.wallet)
-  const [nftList, setNftList] = useState([])
-
-  useEffect(() => {
-    //const lucid = initLucid(walletStore.name)
-    if (walletStore.address != "") {
-      // getAssets(walletStore.address)
-      //   .then((res: any) => { setNftList(res.addressInfo.nfts) })
-    }
-  }, [walletStore.address])
 
   return (
     <div className="px-10">
