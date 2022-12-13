@@ -229,7 +229,7 @@ npm run dev
 ## 7. Roadmap 🐢
 
 ### On chain
-  - [ ] Combine mint raffle with start raffle
+  - [x] Combine mint raffle with start raffle
   - [ ] Enable time intervals in lottery validator
   - [ ] Evaluate and Implement -> [On chain association list with constant time](https://mlabs.slab.com/public/posts/on-chain-association-list-with-constant-time-insert-removal-sh8z2xzy)
   - [ ] Evaluate and Implement Merke Tree for ticket list -> [Plutus Merkle Tree](https://github.com/input-output-hk/hydra/tree/e1c0c5ba5dfbc04b0789a835139d421050f85751/plutus-merkle-tree)
