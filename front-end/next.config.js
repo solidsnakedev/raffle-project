@@ -11,6 +11,11 @@ const nextConfig = {
       layers: true
     }
     return config
+  },
+  env:{
+    BLOCKFROST_KEY: process.env.BLOCKFROST_KEY,
+    API_URL: process.env.API_URL,
+    NETWORK: process.env.NETWORK
   }
 }
 
